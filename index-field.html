@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Migueltech Field App</title>
+<script src="https://cdn.tailwindcss.com/3.4.17"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/5.1.1/tesseract.min.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;700&family=Barlow+Condensed:wght@600;700&display=swap">
+<style>
+:root{color-scheme:dark;--bg:#0a1a1f;--sf:#11282f;--ln:#1f3c45;--tx:#e6f4f1;--mu:#85a5a8;--ac:#5eead4;--in:#07141a;--onac:#04201c}
+:root[data-theme="light"]{color-scheme:light;--bg:#f3f5f7;--sf:#ffffff;--ln:#cfd8df;--tx:#14202b;--mu:#51616f;--ac:#0b63ce;--in:#ffffff;--onac:#ffffff}
+body{background:var(--bg);color:var(--tx);font-family:Barlow,system-ui,sans-serif;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+h1,h2,.hd{font-family:'Barlow Condensed',Barlow,sans-serif}
+.card{background:var(--sf);border:1px solid var(--ln);border-radius:10px}
+.inp{width:100%;background:var(--in);border:1px solid var(--ln);border-radius:6px;padding:.55rem .7rem;color:var(--tx);font-size:.95rem}
+.inp:focus{outline:2px solid var(--ac);outline-offset:1px}
+label{font-size:.78rem;color:var(--mu);display:block;margin:.6rem 0 .2rem}
+.btn{background:var(--ac);color:var(--onac);font-weight:700;border-radius:8px;padding:.7rem 1rem}
+.btn2{background:transparent;border:1px solid var(--ln);color:var(--tx);border-radius:8px;padding:.7rem 1rem}
+.tab{flex:1;padding:.7rem 0;color:var(--mu);font-size:.8rem}.tab.on{color:var(--ac)}
+.hide{display:none!important}
+</style>
+</head>
+<body class="min-h-screen flex flex-col">
+<header class="px-4 py-3 border-b" style="border-color:var(--ln)">
+  <h1 class="text-2xl font-bold"><i class="fa-solid fa-tower-cell" style="color:var(--ac)"></i> Migueltech Field App</h1>
+</header>
+
+<main class="flex-1 w-full max-w-xl mx-auto p-4 pb-28">
+
+<!-- NOVA TAREFA -->
+<section id="v-new">
+  <div class="card p-4">
+    <label>Tipo de intervenção</label>
+    <select id="tipo" class="inp">
+      <option>Instalação</option><option>Suporte | Manutenção</option><option>Alteração de morada</option><option>Alteração de serviço</option><option>Outro</option>
+    </select>
+    <button id="abrir" class="btn w-full mt-4">Abrir Nova Tarefa</button>
+  </div>
+
+  <div id="work" class="hide mt-4">
+    <div class="card p-4">
+      <h2 class="text-xl font-bold mb-2">Ordem de Trabalho</h2>
+      <input id="files" type="file" accept="image/*" multiple class="hide">
+      <div class="flex gap-2">
+        <button id="up" class="btn2 flex-1">Prints / fotos</button>
+        <button id="demo" class="btn2 flex-1">Adicionar manual</button>
+      </div>
+      <div id="thumbs" class="flex gap-2 flex-wrap mt-3"></div>
+      <div id="prog" class="hide mt-3 text-sm" style="color:var(--ac)"></div>
+    </div>
+
+    <div id="form" class="card p-4 mt-4 hide">
+      <h2 class="text-xl font-bold">Resumo para conferir</h2>
+      <details class="mt-2"><summary class="text-xs cursor-pointer" style="color:var(--mu)">Texto lido pelo OCR (para diagnóstico)</summary><pre id="ocrtxt" class="text-xs whitespace-pre-wrap mt-1" style="color:var(--mu)"></pre></details>
+      <label>WO</label><input id="wo" class="inp">
+      <label>Conta de serviço</label><input id="conta" class="inp">
+      <label>Cliente</label><input id="cli" class="inp">
+      <label>Contacto</label><input id="tel" class="inp" inputmode="tel">
+      <label>Morada</label><textarea id="mor" rows="2" class="inp"></textarea>
+      <label>Equipamentos instalados (um por linha, com SN)</label><textarea id="inst" rows="3" class="inp"></textarea><button class="btn2 text-sm w-full mt-1" onclick="scan('inst')">Ler código de barras</button>
+      <label>Equipamentos recolhidos (um por linha, com SN)</label><textarea id="rec" rows="3" class="inp"></textarea><button class="btn2 text-sm w-full mt-1" onclick="scan('rec')">Ler código de barras</button>
+      <label>Notas</label><textarea id="nota" rows="2" class="inp"></textarea>
+      <label>Relatório</label><textarea id="rel" rows="9" class="inp" style="font-size:.82rem"></textarea>
+      <button id="gen" class="btn2 w-full mt-3">Gerar relatório</button>
+      <div class="flex gap-2 mt-2">
+        <button id="tg" class="btn flex-1">Telegram</button>
+        <button id="em" class="btn flex-1">Email</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HISTÓRICO -->
+<section id="v-hist" class="hide">
+  <input id="q" class="inp" placeholder="Pesquisar por WO, cliente, morada, SN...">
+  <div id="list" class="mt-3 space-y-2"></div>
+</section>
+
+<!-- COMUNIDADE -->
+<section id="v-com" class="hide">
+  <div class="flex gap-2 mb-3">
+    <button class="btn flex-1 seg" data-s="news">Notícias</button>
+    <button class="btn2 flex-1 seg" data-s="map">Mapa</button>
+    <button class="btn2 flex-1 seg" data-s="forum">Fórum</button>
+  </div>
+  <div id="modo" class="text-xs mb-2" style="color:var(--mu)"></div>
+
+  <div id="s-news" class="space-y-2"><div id="n_list" class="space-y-2"></div><div class="hide">
+    <div class="text-xs" style="color:var(--mu)">Resumo recolhido a 25/10/2026. As notícias não se atualizam sozinhas.</div>
+    <a class="card p-3 block" target="_blank" rel="noopener" href="https://senalnews.com/en/digital/portugal-pay-tv-market-stalls-at-47-million-subscriptions"><b class="hd text-lg">Anacom: TV paga estagna nos 4,7 milhões</b><p class="text-sm mt-1" style="color:var(--mu)">No 2.º trimestre de 2026 havia 4,7 milhões de subscrições, mais 0,3% do que um ano antes. Fonte: SenalNews, 11/09/2026.</p></a>
+    <a class="card p-3 block" target="_blank" rel="noopener" href="https://pt.linkedin.com/in/nuno-prates-25a2b48"><b class="hd text-lg">NOS leva fibra a todos os concelhos</b><p class="text-sm mt-1" style="color:var(--mu)">A operadora fala num investimento de 326 milhões de euros em 10 anos para cobrir todo o país, incluindo zonas rurais. Fonte: publicação no LinkedIn (data não confirmada).</p></a>
+    <a class="card p-3 block" target="_blank" rel="noopener" href="https://pplware.sapo.pt/?p=964250"><b class="hd text-lg">Concurso de fibra para o interior</b><p class="text-sm mt-1" style="color:var(--mu)">Projeto de cerca de 425 milhões de euros para mais de 400 mil casas, com cobertura de todo o continente prevista até 2026/2027. Fonte: Pplware (data não confirmada).</p></a>
+  </div></div>
+
+  <div id="s-map" class="hide">
+    <div class="card p-3">
+      <h2 class="text-xl font-bold">Reporte</h2>
+      <label>Tipo de incidente</label>
+      <input id="i_tipo" class="inp" placeholder="Ex.: poste caído, pista obstruída">
+      <label>Local (rua, zona)</label><input id="i_loc" class="inp">
+      <label>Descrição</label><textarea id="i_desc" rows="2" class="inp"></textarea>
+      <label>Foto (opcional)</label>
+      <input id="i_gal" type="file" accept="image/*" class="hide">
+      <div class="flex gap-2"><button id="i_galbtn" class="btn2 flex-1">Carregar foto</button></div>
+      <img id="i_prev" alt="Pré-visualização" class="hide mt-2 rounded" style="max-height:140px">
+      <div class="flex gap-2 mt-3"><button id="i_gps" class="btn2 flex-1">GPS</button><button id="i_add" class="btn flex-1">Reportar</button></div>
+      <div id="i_pos" class="text-xs mt-1" style="color:var(--mu)"></div>
+    </div>
+    <div id="mapa" class="card mt-3 p-2"></div>
+    <div id="i_list" class="mt-3 space-y-2"></div>
+  </div>
+
+  <div id="s-forum" class="hide">
+    <div class="card p-3"><textarea id="f_txt" rows="2" class="inp" placeholder="Escreva uma pergunta ou dica para os colegas..."></textarea><button id="f_add" class="btn w-full mt-2">Publicar</button></div>
+    <div id="f_list" class="mt-3 space-y-2"></div>
+  </div>
+</section>
+
+<!-- CONFIG -->
+<section id="v-cfg" class="hide">
+  <div class="card p-4">
+    <h2 class="text-xl font-bold">Perfil do técnico</h2>
+    <label>Nome</label><input id="c_nome" class="inp">
+    <label>País / Zona</label><input id="c_pais" class="inp">
+    <label>Empresa</label><input id="c_emp" class="inp">
+    <label>Empreiteira</label><input id="c_empr" class="inp">
+    <label>Email de destino (para enviar o relatório)</label><input id="c_mail" class="inp" type="email">
+    <label>Telegram: chat ID</label><input id="c_chat" class="inp">
+    <label>Aspeto</label>
+    <select id="c_tema" class="inp"><option value="dark">Escuro</option><option value="light">Claro (para ver ao sol)</option></select>
+    <button id="save" class="btn w-full mt-4">Guardar perfil</button>
+    <p class="text-xs mt-2" style="color:var(--mu)">Os dados ficam apenas neste dispositivo.</p>
+  </div>
+</section>
+</main>
+
+<footer class="text-center text-xs py-2" style="color:var(--mu);margin-bottom:64px">Criado e assinado por Miguel Sacramento</footer>
+
+<nav class="fixed bottom-0 inset-x-0 flex border-t" style="background:var(--sf);border-color:var(--ln);padding-bottom:env(safe-area-inset-bottom,0px)">
+  <button class="tab on" data-v="new">Tarefa</button>
+  <button class="tab" data-v="hist">Histórico</button>
+  <button class="tab" data-v="cfg">Perfil</button>
+  <button class="tab" data-v="com">Comunidade</button>
+</nav>
+<div id="scan" class="hide fixed inset-0 z-50 flex flex-col" style="background:rgba(0,0,0,.94)">
+  <video id="sv" playsinline muted class="flex-1 w-full object-cover min-h-0"></video>
+  <div id="smsg" class="p-3 text-center text-sm" style="color:#fff"></div>
+  <div class="flex gap-2 p-3" style="padding-bottom:calc(.75rem + env(safe-area-inset-bottom,0px))"><input id="sfile" type="file" accept="image/*" capture="environment" class="hide"><button id="sphoto" class="btn2 flex-1" style="color:#fff">Tirar foto</button><button id="sclose" class="btn flex-1">Concluir</button></div>
+</div>
+<div id="toast" class="hide fixed left-1/2 -translate-x-1/2 bottom-24 px-4 py-2 rounded-lg text-sm" style="background:var(--ac);color:var(--onac)"></div>
+
+<script>
+const $=id=>document.getElementById(id);
+const store={get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){toast('Não foi possível guardar neste navegador')}}};
+const DEF={nome:'Miguel Sacramento',emp:'Migueltech Telecom',mail:'',tok:'',chat:''};
+const toast=m=>{const t=$('toast');t.textContent=m;t.classList.remove('hide');setTimeout(()=>t.classList.add('hide'),2400)};
+
+// Navegação
+document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('on',x===b));
+  ['new','hist','cfg','com'].forEach(v=>$('v-'+v).classList.toggle('hide',v!==b.dataset.v));
+  if(b.dataset.v==='hist')renderHist();if(b.dataset.v==='com')initCom();
+});
+
+// Perfil
+function loadCfg(){const c=store.get('mt_cfg',DEF);$('c_nome').value=c.nome;$('c_emp').value=c.emp;$('c_mail').value=c.mail||'';$('c_pais').value=c.pais||'';$('c_empr').value=c.empr||'';$('c_chat').value=c.chat||''}
+$('save').onclick=()=>{store.set('mt_cfg',{nome:$('c_nome').value,pais:$('c_pais').value,emp:$('c_emp').value,empr:$('c_empr').value,mail:$('c_mail').value,tok:(store.get('mt_cfg',DEF).tok||''),chat:$('c_chat').value});toast('Perfil guardado')};
+loadCfg();
+
+// Tarefa
+let texts=[];
+$('abrir').onclick=()=>{$('work').classList.remove('hide');$('abrir').textContent='Tarefa aberta'};
+$('up').onclick=()=>$('files').click();
+$('files').onchange=async e=>{
+  const fs=[...e.target.files];if(!fs.length)return;
+  $('thumbs').innerHTML='';fs.forEach(f=>{const i=new Image();i.src=URL.createObjectURL(f);i.className='h-16 rounded border';i.style.borderColor='var(--ln)';$('thumbs').appendChild(i)});
+  $('prog').classList.remove('hide');texts=[];
+  if(await aiRead(fs))return;
+  if(window.claude){showForm();report();return}
+  try{
+    for(let i=0;i<fs.length;i++){
+      $('prog').textContent=`OCR ${i+1}/${fs.length}...`;
+      const r=await Promise.race([Tesseract.recognize(fs[i],'por+eng',{logger:m=>{$('prog').textContent=`OCR ${i+1}/${fs.length}: ${m.status} ${Math.round((m.progress||0)*100)}%`}}),new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),45000))]);
+      texts.push(r.data.text);
+    }
+    $('ocrtxt').textContent=texts.join('\n---\n');fill(parse(texts.join('\n')));
+  $('prog').classList.add('hide');}catch(err){$('prog').textContent='O OCR não consegue carregar aqui (ficheiros de idioma bloqueados). Descarregue o ficheiro HTML e abra-o no telemóvel/PC, ou preencha os campos abaixo manualmente.';showForm();report()}
+};
+const shrink=f=>new Promise((ok,no)=>{const i=new Image();i.onload=()=>{const k=Math.min(1,1600/Math.max(i.width,i.height)),c=document.createElement('canvas');c.width=i.width*k;c.height=i.height*k;c.getContext('2d').drawImage(i,0,0,c.width,c.height);c.toBlob(b=>b?ok(b):no(new Error('img')),'image/jpeg',.85)};i.onerror=()=>no(new Error('img'));i.src=URL.createObjectURL(f)});
+async function aiApi(fs){
+  try{
+    $('prog').textContent='A ler os prints com IA (pode demorar)...';
+    const b64=await Promise.all(fs.slice(0,4).map(async f=>{const b=await shrink(f);return new Promise(r=>{const fr=new FileReader();fr.onload=()=>r(fr.result.split(',')[1]);fr.readAsDataURL(b)})}));
+    const content=b64.map(d=>({type:'image',source:{type:'base64',media_type:'image/jpeg',data:d}}));
+    content.push({type:'text',text:'Estas imagens sao prints de uma Ordem de Trabalho (WO) de telecomunicacoes em portugues. Responde APENAS com um objeto JSON: {"wo":"","conta":"conta de servico","cli":"nome do cliente","tel":"contacto","mor":"morada completa","inst":["equipamento instalado + SN"],"rec":["equipamento recolhido + SN"]}. Usa "" ou [] se nao encontrares. Nao inventes; copia os SN exatamente.'});
+    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1000,messages:[{role:'user',content}]})});
+    const j=await r.json();
+    const t=(j.content||[]).map(i=>i.text||'').join('');
+    const d=JSON.parse(t.slice(t.indexOf('{'),t.lastIndexOf('}')+1));
+    const J=v=>Array.isArray(v)?v.join('\n'):(v||'');
+    fill({wo:d.wo,conta:d.conta,cli:d.cli,tel:d.tel,mor:d.mor,inst:J(d.inst),rec:J(d.rec)});
+    $('prog').classList.add('hide');return true;
+  }catch(e){$('prog').textContent='Leitura por IA falhou ('+((e&&e.message)||'erro')+'). Preencha manualmente.';return false}
+}
+async function aiRead(fs){
+  try{
+    if(!window.claude||typeof claude.use!=='function')return await aiApi(fs);
+    const s=await claude.use('sample');if(!s){$('prog').textContent='A leitura por IA nao foi autorizada ou nao esta disponivel. Preencha manualmente ou volte a carregar os prints e aceite o pedido.';return false}
+    const lim=await s.limits();if(!lim||!lim.images){$('prog').textContent='Esta vista nao permite enviar imagens ao Claude. Abra a pagina publicada diretamente em claude.ai ou preencha manualmente.';return false}
+    $('prog').textContent='A ler os prints com IA (pode demorar até 1 min)...';
+    const blobs=fs.slice(0,lim.images.maxCount||4);
+    const d=await s.json('Estas imagens são prints/fotos de uma Ordem de Trabalho (WO) de telecomunicações em português. Extrai os dados e responde APENAS com um objeto JSON: {"wo":"identificação da WO","conta":"conta de serviço","cli":"nome do cliente","tel":"contacto","mor":"morada completa","inst":["equipamento instalado + SN"],"rec":["equipamento recolhido + SN"]}. Usa "" ou [] quando não encontrares. Não inventes valores; copia números de série exatamente.',{images:blobs,modelTier:'default'});
+    const j=v=>Array.isArray(v)?v.join('\n'):(v||'');
+    fill({wo:d.wo,conta:d.conta,cli:d.cli,tel:d.tel,mor:d.mor,inst:j(d.inst),rec:j(d.rec)});
+    $('prog').classList.add('hide');return true;
+  }catch(e){$('prog').textContent='Leitura por IA indisponível ('+((e&&e.code)||'erro')+': '+((e&&e.message)||'')+'). A tentar OCR...';return false}
+}
+const SAMPLE=`WO: WO-2026-48213
+Conta de serviço: 1.2345678
+Cliente: Ana Margarida Ferreira
+Telemóvel: 912 345 678
+Morada: Rua das Flores 25, 3º Esq, 2745-123 Queluz
+Instalado: ONT Huawei HG8010H SN: 48575443A1B2C3D4
+Instalado: Box TV UIW4020 SN: UIW402012345678
+Recolhido: Router Thomson TG789 SN: CP1234ZXY89`;
+$('demo').onclick=()=>{$('thumbs').innerHTML='';$('prog').classList.add('hide');['wo','conta','cli','tel','mor','inst','rec','nota'].forEach(k=>$(k).value='');showForm();report();$('wo').focus();$('form').scrollIntoView({behavior:'smooth'})};
+
+function parse(t){
+  const g=(re)=>{const m=t.match(re);return m?m[1].trim():''};
+  const lines=t.split('\n').map(s=>s.trim()).filter(Boolean);
+  const eq=k=>lines.filter(l=>new RegExp('^'+k,'i').test(l)).map(l=>l.replace(new RegExp('^'+k+'\\w*\\s*:?\\s*','i'),''));
+  let inst=eq('instalad'),rec=eq('recolhid');
+  if(!inst.length&&!rec.length)inst=lines.filter(l=>/\bS\/?N\b/i.test(l));
+  return{wo:g(/\b(?:WO|Ordem[^:\n]*)\s*[:#-]?\s*([A-Z]{0,3}-?\d[\w-]{4,})/i),
+    conta:g(/Conta[^:\n]*:\s*([\d.\-]+)/i),
+    cli:g(/Cliente\s*:\s*(.+)/i),
+    tel:g(/(?:Telem[óo]vel|Contacto|Tel\w*)\s*:\s*([\d +]{9,})/i)||g(/\b([239]\d{2}\s?\d{3}\s?\d{3})\b/),
+    mor:g(/Morada\s*:\s*(.+)/i),inst:inst.join('\n'),rec:rec.join('\n')};
+}
+function showForm(){$('form').classList.remove('hide')}
+function fill(d){
+  ['wo','conta','cli','tel','mor','inst','rec'].forEach(k=>$(k).value=d[k]||'');
+  showForm();report();toast('Dados extraídos. Confira os campos.');
+  $('form').scrollIntoView({behavior:'smooth'});
+}
+function report(){
+  const c=store.get('mt_cfg',DEF),nl=s=>(s||'—').split('\n').map(x=>'  • '+x).join('\n');
+  $('rel').value=`📋 RELATÓRIO DE INTERVENÇÃO
+Tipo: ${$('tipo').value}
+WO: ${$('wo').value||'—'}
+Conta de serviço: ${$('conta').value||'—'}
+Cliente: ${$('cli').value||'—'}
+Contacto: ${$('tel').value||'—'}
+Morada: ${$('mor').value||'—'}
+
+Equipamentos instalados:
+${nl($('inst').value)}
+
+Equipamentos recolhidos:
+${nl($('rec').value)}
+${$('nota').value?'\nNotas: '+$('nota').value+'\n':''}
+Técnico: ${c.nome} | ${c.emp}${c.empr?' | Empreiteira: '+c.empr:''}${c.pais?' | '+c.pais:''}
+Data: ${new Date().toLocaleString('pt-PT')}`;
+}
+$('gen').onclick=report;
+
+function finish(){
+  const h=store.get('mt_hist',[]);
+  h.unshift({id:Date.now(),tipo:$('tipo').value,wo:$('wo').value,cli:$('cli').value,mor:$('mor').value,txt:$('rel').value,data:new Date().toISOString()});
+  store.set('mt_hist',h);
+  ['wo','conta','cli','tel','mor','inst','rec','nota','rel'].forEach(k=>$(k).value='');
+  $('thumbs').innerHTML='';$('files').value='';texts=[];
+  $('form').classList.add('hide');$('work').classList.add('hide');$('abrir').innerHTML='Abrir Nova Tarefa';
+  toast('Enviado e guardado no histórico');window.scrollTo(0,0);
+}
+$('tg').onclick=async()=>{
+  report();const c=store.get('mt_cfg',DEF),txt=$('rel').value;
+  if(c.tok&&c.chat){
+    try{const r=await fetch(`https://api.telegram.org/bot${c.tok}/sendMessage`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({chat_id:c.chat,text:txt})});
+      if(!r.ok)throw 0;finish();}catch(e){toast('Falha no envio Telegram. Verifique o Perfil.')}
+  }else{window.open('https://t.me/share/url?url=%20&text='+encodeURIComponent(txt),'_blank');finish()}
+};
+$('em').onclick=async()=>{
+  report();const c=store.get('mt_cfg',DEF);
+  window.open(`mailto:${c.mail||''}?subject=${encodeURIComponent('Relatório '+($('wo').value||$('tipo').value))}&body=${encodeURIComponent($('rel').value)}`,'_blank');
+  let cp=false;try{await navigator.clipboard.writeText($('rel').value);cp=true}catch(e){}
+  toast(cp?'Relatório copiado. Se o email não abrir, cole-o numa mensagem.':'Se o email não abrir, copie o relatório no Histórico.');
+  setTimeout(finish,2500);
+};
+
+// Histórico
+const esc=s=>String(s||'').replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
+function renderHist(){
+  const q=$('q').value.toLowerCase(),h=store.get('mt_hist',[]).filter(x=>!q||JSON.stringify(x).toLowerCase().includes(q));
+  $('list').innerHTML=h.length?h.map(x=>`<details class="card p-3"><summary class="cursor-pointer"><b>${esc(x.wo||'Sem WO')}</b> · ${esc(x.cli||'—')}<div class="text-xs" style="color:var(--mu)">${esc(x.tipo)} · ${new Date(x.data).toLocaleString('pt-PT')}</div></summary><pre class="text-xs mt-2 whitespace-pre-wrap">${esc(x.txt)}</pre><div class="flex gap-2 mt-2"><button class="btn2 text-sm flex-1" onclick="cp(${x.id})">Copiar</button><button class="btn2 text-sm flex-1" onclick="del(${x.id})">Apagar</button></div></details>`).join(''):'<p class="text-sm text-center mt-6" style="color:var(--mu)">Sem intervenções. Envie a primeira tarefa para a ver aqui.</p>';
+}
+window.cp=async id=>{const x=store.get('mt_hist',[]).find(i=>i.id===id);if(!x)return;let ok=false;try{await navigator.clipboard.writeText(x.txt);ok=true}catch(e){try{const t=document.createElement('textarea');t.value=x.txt;t.style.position='fixed';t.style.opacity='0';document.body.appendChild(t);t.select();ok=document.execCommand('copy');t.remove()}catch(e2){}}toast(ok?'Relatório copiado':'Não foi possível copiar')};
+window.del=id=>{store.set('mt_hist',store.get('mt_hist',[]).filter(x=>x.id!==id));renderHist()};
+$('q').oninput=renderHist;
+function applyTheme(t){document.documentElement.dataset.theme=t;$('c_tema').value=t}
+$('c_tema').onchange=e=>{applyTheme(e.target.value);store.set('mt_theme',e.target.value)};
+applyTheme(store.get('mt_theme','dark'));
+
+// Leitor de código de barras
+let sTarget=null,sStream=null,sTimer=null,sRd=null,sLast='';
+const loadZX=()=>window.ZXing?Promise.resolve():new Promise((ok,no)=>{const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js';s.onload=ok;s.onerror=no;document.head.appendChild(s)});
+function gotCode(c){
+  if(!c||c===sLast)return;sLast=c;
+  const t=$(sTarget);t.value=(t.value?t.value.replace(/\n?$/,'\n'):'')+'SN: '+c;
+  if(navigator.vibrate)navigator.vibrate(80);
+  $('smsg').textContent='Lido: '+c+'. Aponte ao próximo ou toque em Concluir.';report();
+}
+function stopScan(){clearInterval(sTimer);if(sRd){try{sRd.reset()}catch(e){}sRd=null}if(sStream){sStream.getTracks().forEach(t=>t.stop());sStream=null}$('scan').classList.add('hide')}
+async function scan(id){
+  sTarget=id;sLast='';$('scan').classList.remove('hide');$('smsg').textContent='A abrir a câmara...';
+  try{
+    sStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}});
+    const v=$('sv');v.srcObject=sStream;await v.play();$('smsg').textContent='Aponte ao código de barras';
+    if('BarcodeDetector' in window){const bd=new BarcodeDetector();sTimer=setInterval(async()=>{try{const r=await bd.detect(v);if(r[0])gotCode(r[0].rawValue)}catch(e){}},350)}
+    else{await loadZX();sRd=new ZXing.BrowserMultiFormatReader();sRd.decodeFromVideoElement(v,r=>{if(r)gotCode(r.getText())})}
+  }catch(e){$('smsg').textContent='Câmara indisponível aqui. Toque em "Tirar foto" e fotografe o código.'}
+}
+window.scan=scan;
+$('sclose').onclick=stopScan;
+$('sphoto').onclick=()=>$('sfile').click();
+$('sfile').onchange=async e=>{
+  const f=e.target.files[0];e.target.value='';if(!f)return;
+  $('smsg').textContent='A ler a foto...';
+  try{
+    if('BarcodeDetector' in window){const r=await new BarcodeDetector().detect(await createImageBitmap(f));if(!r[0])throw 0;gotCode(r[0].rawValue)}
+    else{await loadZX();const r=await new ZXing.BrowserMultiFormatReader().decodeFromImageUrl(URL.createObjectURL(f));gotCode(r.getText())}
+  }catch(x){$('smsg').textContent='Não consegui ler. Aproxime, com boa luz, ou escreva o SN à mão.'}
+};
+
+// Comunidade
+let DB=null,feeds={incidents:[],forum:[],news:[],votes:[]},pos=null,myId=null;
+const NEWS=[
+{id:'n1',ts:1792886400000,t:'Anacom: TV paga estagna nos 4,7 milhões',d:'No 2.º trimestre de 2026 havia 4,7 milhões de subscrições, mais 0,3% do que um ano antes. Fonte: SenalNews, 11/09/2026.',url:'https://senalnews.com/en/digital/portugal-pay-tv-market-stalls-at-47-million-subscriptions'},
+{id:'n2',ts:1792886400000,t:'NOS leva fibra a todos os concelhos',d:'A operadora fala num investimento de 326 milhões de euros em 10 anos para cobrir todo o país, incluindo zonas rurais. Fonte: LinkedIn (data não confirmada).',url:'https://pt.linkedin.com/in/nuno-prates-25a2b48'},
+{id:'n3',ts:1792886400000,t:'Concurso de fibra para o interior',d:'Projeto de cerca de 425 milhões de euros para mais de 400 mil casas, com cobertura do continente prevista até 2026/2027. Fonte: Pplware (data não confirmada).',url:'https://pplware.sapo.pt/?p=964250'}];
+async function vote(nid,v){
+  const id=nid+'_'+(myId||'local'),ex=(feeds.votes||[]).find(x=>x.id===id),nv=ex&&ex.v===v?0:v,o={news:nid,v:nv,ts:Date.now()};
+  if(DB){try{await DB.collection('votes').doc(id).set(o);return}catch(e){toast('Sem permissão para votar. Voto guardado só aqui.')}}
+  feeds.votes=(feeds.votes||[]).filter(x=>x.id!==id).concat([{id,...o}]);store.set('mt_votes',feeds.votes);drawCom();
+}
+window.vote=vote;
+function drawNews(){
+  const real=feeds.news&&feeds.news.length,L=(real?feeds.news:NEWS).slice(0,10),V=feeds.votes||[];
+  const me0=id=>(V.find(x=>x.id===id+'_'+(myId||'local'))||{}).v;
+  $('n_list').innerHTML='<div class="text-xs" style="color:var(--mu)">'+(real?'Atualizado em '+new Date(Math.max(...L.map(x=>x.ts||0))).toLocaleDateString('pt-PT'):'Resumo recolhido a 25/10/2026.')+'</div>'+L.map(n=>{const u=V.filter(x=>x.news===n.id&&x.v===1).length,d=V.filter(x=>x.news===n.id&&x.v===-1).length,me=me0(n.id),st=a=>me===a?'border-color:var(--ac);color:var(--ac)':'';return `<div class="card p-3"><a target="_blank" rel="noopener" href="${esc(n.url)}"><b class="hd text-lg">${esc(n.t)}</b></a><p class="text-sm mt-1" style="color:var(--mu)">${esc(n.d)}</p><div class="text-xs mt-1" style="color:var(--ac)">Fonte: ${esc(n.fonte||'ver liga')}${n.data?' · '+esc(n.data):''}</div><div class="flex gap-2 mt-2"><button class="btn2 text-sm flex-1" style="${st(1)}" onclick="vote('${esc(n.id)}',1)">Gosto (${u})</button><button class="btn2 text-sm flex-1" style="${st(-1)}" onclick="vote('${esc(n.id)}',-1)">Não gosto (${d})</button></div></div>`}).join('');
+}
+async function initCom(){
+  if(initCom.done)return;initCom.done=1;
+  try{if(window.claude&&typeof claude.use==='function'){DB=await claude.use('db');const u=await claude.use('user');if(u&&u.id)myId=await u.id()}}catch(e){}
+  for(const k of ['incidents','forum','news','votes']){
+    if(DB){try{DB.collection(k).orderBy('ts','desc').limit(k==='news'?10:100).onSnapshot(s=>{feeds[k]=s.docs.map(d=>({id:d.id,...d.data()}));drawCom()},()=>{DB=null;$('modo').textContent='Apenas neste dispositivo';feeds[k]=store.get('mt_'+k,[]);drawCom()})}catch(e){DB=null;feeds[k]=store.get('mt_'+k,[])}}
+    else feeds[k]=store.get('mt_'+k,[]);
+  }
+  $('modo').textContent=DB?'Partilhado com outros técnicos':'Apenas neste dispositivo';
+  drawCom();
+}
+async function addItem(k,o){
+  o.ts=Date.now();o.autor=store.get('mt_cfg',DEF).nome||'Técnico';
+  if(DB){try{await DB.collection(k).add(o);return true}catch(e){toast('Sem permissão para partilhar. Guardado só aqui.')}}
+  o.id=String(o.ts);feeds[k].unshift(o);store.set('mt_'+k,feeds[k]);drawCom();return true;
+}
+document.querySelectorAll('.seg').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('.seg').forEach(x=>{x.className=(x===b?'btn':'btn2')+' flex-1 seg'});
+  ['news','map','forum'].forEach(s=>$('s-'+s).classList.toggle('hide',s!==b.dataset.s));
+});
+$('i_gps').onclick=()=>{
+  if(!navigator.geolocation){toast('GPS indisponível');return}
+  $('i_pos').textContent='A obter localização...';
+  navigator.geolocation.getCurrentPosition(p=>{pos={lat:+p.coords.latitude.toFixed(5),lon:+p.coords.longitude.toFixed(5)};$('i_pos').innerHTML='GPS: '+pos.lat+', '+pos.lon+' · <a style="color:var(--ac)" target="_blank" rel="noopener" href="https://www.google.com/maps?q='+pos.lat+','+pos.lon+'">Ver onde estou no Google Maps</a>'},()=>{pos=null;$('i_pos').textContent='Não foi possível obter o GPS. Escreva o local.'},{timeout:10000});
+};
+$('i_add').onclick=async()=>{
+  if(!$('i_loc').value.trim()&&!pos){toast('Indique o local ou use o GPS');return}
+  const t=$('i_tipo').value.trim()||'Incidente',l=$('i_loc').value.trim(),d=$('i_desc').value.trim(),la=pos?pos.lat:null,lo=pos?pos.lon:null;
+  await addItem('incidents',{tipo:t,loc:l,desc:d,lat:la,lon:lo});
+  await addItem('forum',{txt:'Incidente: '+t+(l?'\nLocal: '+l:'')+(d?'\n'+d:''),foto:foto||null,lat:la,lon:lo});
+  foto=null;$('i_prev').classList.add('hide');$('i_tipo').value='';$('i_loc').value='';$('i_desc').value='';pos=null;$('i_pos').textContent='';toast('Incidente reportado e publicado no fórum');
+};
+let foto=null;
+const shrinkURL=f=>new Promise((ok,no)=>{const i=new Image();i.onload=()=>{const k=Math.min(1,800/Math.max(i.width,i.height)),c=document.createElement('canvas');c.width=i.width*k;c.height=i.height*k;c.getContext('2d').drawImage(i,0,0,c.width,c.height);ok(c.toDataURL('image/jpeg',.6))};i.onerror=no;i.src=URL.createObjectURL(f)});
+async function pick(e){const f=e.target.files[0];if(!f)return;try{foto=await shrinkURL(f);$('i_prev').src=foto;$('i_prev').classList.remove('hide')}catch(x){toast('Não foi possível ler a foto')}}
+$('i_galbtn').onclick=()=>$('i_gal').click();$('i_gal').onchange=pick;
+const okImg=s=>typeof s==='string'&&/^data:image\/jpeg;base64,[A-Za-z0-9+\/=]+$/.test(s);
+$('f_add').onclick=async()=>{const t=$('f_txt').value.trim();if(!t)return;await addItem('forum',{txt:t});$('f_txt').value=''};
+function ago(ts){const m=Math.round((Date.now()-ts)/60000);return m<1?'agora':m<60?m+' min':m<1440?Math.round(m/60)+' h':Math.round(m/1440)+' d'}
+function drawCom(){
+  drawNews();
+  const inc=feeds.incidents||[],fo=feeds.forum||[],gp=inc.filter(x=>x.lat!=null);
+  let svg='';
+  if(gp.length){
+    const la=gp.map(x=>x.lat),lo=gp.map(x=>x.lon),a=Math.min(...la),b=Math.max(...la),c=Math.min(...lo),d=Math.max(...lo);
+    const X=v=>d===c?160:20+(v-c)/(d-c)*280,Y=v=>b===a?90:170-(v-a)/(b-a)*160;
+    svg=`<svg viewBox="0 0 320 180" class="w-full" style="background:var(--in);border-radius:6px"><g style="stroke:var(--ln)"><path d="M0 60H320M0 120H320M107 0V180M213 0V180"/></g>${gp.map(x=>`<a href="https://www.google.com/maps?q=${x.lat},${x.lon}" target="_blank"><circle cx="${X(x.lon)}" cy="${Y(x.lat)}" r="8" style="fill:var(--ac);stroke:var(--bg)" stroke-width="2"><title>${esc(x.tipo)}</title></circle></a>`).join('')}</svg><div class="text-xs mt-1" style="color:var(--mu)">Esquema dos incidentes com GPS (sem mapa de fundo). Toque num ponto ou em "Abrir no mapa".</div>`;
+  }else svg='<div class="text-sm p-3" style="color:var(--mu)">Ainda sem incidentes com GPS. Use "GPS" ao reportar.</div>';
+  $('mapa').innerHTML=svg;
+  $('i_list').innerHTML=inc.length?inc.map(x=>`<div class="card p-3"><b>${esc(x.tipo)}</b> <span class="text-xs" style="color:var(--mu)">há ${ago(x.ts)} · ${esc(x.autor)}</span><div class="text-sm">${esc(x.loc)}</div><div class="text-sm" style="color:var(--mu)">${esc(x.desc)}</div>${x.lat!=null?`<a class="text-sm" style="color:var(--ac)" target="_blank" rel="noopener" href="https://www.google.com/maps?q=${x.lat},${x.lon}">Abrir no mapa</a>`:''}</div>`).join(''):'<p class="text-sm text-center" style="color:var(--mu)">Sem incidentes. Reporte o primeiro.</p>';
+  $('f_list').innerHTML=fo.length?fo.map(x=>`<div class="card p-3"><b>${esc(x.autor)}</b> <span class="text-xs" style="color:var(--mu)">há ${ago(x.ts)}</span><div class="text-sm mt-1 whitespace-pre-wrap">${esc(x.txt)}</div>${okImg(x.foto)?`<img src="${x.foto}" alt="Foto do incidente" class="mt-2 rounded w-full">`:''}${x.lat!=null?`<a class="text-sm" style="color:var(--ac)" target="_blank" rel="noopener" href="https://www.google.com/maps?q=${x.lat},${x.lon}">Abrir no mapa</a>`:''}</div>`).join(''):'<p class="text-sm text-center" style="color:var(--mu)">Sem mensagens. Comece a conversa.</p>';
+}
+</script>
+</body>
+</html>
