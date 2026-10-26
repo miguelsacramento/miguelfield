@@ -84,7 +84,6 @@ label{font-size:.78rem;color:var(--mu);display:block;margin:.6rem 0 .2rem}
   <div class="flex gap-2 mb-3"><button class="btn flex-1 hseg" data-h="list">Lista</button><button class="btn2 flex-1 hseg" data-h="cal">Calendário</button></div>
   <div id="h-list"><input id="q" class="inp" placeholder="Pesquisar por WO, cliente, morada, SN..."><div id="list" class="mt-3 space-y-2"></div></div>
   <div id="h-cal" class="hide">
-    <details class="card p-3 mb-3"><summary class="cursor-pointer font-bold">Calculadora do técnico (valor por tarefa)</summary><div id="rates"></div><button id="rsave" class="btn w-full mt-3">Guardar valores</button></details>
     <div class="flex items-center justify-between mb-2"><button id="cprev" class="btn2" aria-label="Mês anterior">&lsaquo;</button><b id="cmes" class="hd text-xl"></b><button id="cnext" class="btn2" aria-label="Mês seguinte">&rsaquo;</button></div>
     <div id="cgrid" class="grid grid-cols-7 gap-1 text-center text-xs"></div>
     <div id="cmtot" class="mt-2 font-bold"></div>
@@ -142,6 +141,10 @@ label{font-size:.78rem;color:var(--mu);display:block;margin:.6rem 0 .2rem}
     <label>Empreiteira</label><input id="c_empr" class="inp">
     <label>Email de destino (para enviar o relatório)</label><input id="c_mail" class="inp" type="email">
     <label>Telegram: chat ID</label><input id="c_chat" class="inp">
+    <h2 class="text-xl font-bold mt-5">Calculadora do técnico</h2>
+    <p class="text-xs" style="color:var(--mu)">Valor de cada tarefa, para a operadora escolhida no topo. O calendário do Histórico soma por dia.</p>
+    <div id="rates"></div>
+    <button id="rsave" class="btn w-full mt-3">Guardar valores</button>
     <label>Login</label>
     <select id="c_login" class="inp"><option value="0">Desligado (modo de teste)</option><option value="1">Ligado</option></select>
     <button id="c_out" class="btn2 w-full mt-3">Terminar sessão</button>
@@ -454,7 +457,7 @@ const eur=n=>n.toLocaleString('pt-PT',{style:'currency',currency:'EUR'}),pad=n=>
 const getRates=()=>store.get('mt_rates_'+store.get('mt_op','nos'),{});
 const rate=t=>+(getRates()[t]||0);
 const dkey=iso=>{const d=new Date(iso);return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())};
-const val=x=>x.valor!=null?x.valor:rate(x.tipo);
+const val=x=>x.valor>0?x.valor:+((store.get('mt_rates_'+(x.op||store.get('mt_op','nos')),{}))[x.tipo]||0);
 let cY=new Date().getFullYear(),cM=new Date().getMonth();
 function renderRates(){const r=getRates();$('rates').innerHTML=tiposOp().map((t,i)=>`<label>${esc(t)} (€)</label><input class="inp" id="r_${i}" type="number" step="0.01" min="0" value="${r[t]??''}">`).join('')}
 function applyOp(o){document.documentElement.dataset.op=o;$('op').value=o;store.set('mt_op',o);fillTipos();renderRates();if(!$('h-cal').classList.contains('hide'))drawCal()}
@@ -470,7 +473,7 @@ function drawCal(){
   let h=['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'].map(d=>`<div style="color:var(--mu)">${d}</div>`).join('')+'<div></div>'.repeat(off),mt=0;
   for(let d=1;d<=nd;d++){const k=cY+'-'+pad(cM+1)+'-'+pad(d),t=by[k]||[],tot=t.reduce((a,x)=>a+val(x),0);mt+=tot;
     h+=`<button data-d="${k}" style="border:1px solid ${t.length?'var(--ac)':'var(--ln)'};border-radius:6px;padding:.35rem 0;background:var(--sf);color:var(--tx)">${d}<div style="color:var(--ac);min-height:1em">${t.length?(tot?Math.round(tot)+'€':'•'):''}</div></button>`}
-  $('cgrid').innerHTML=h;$('cmtot').textContent='Total do mês: '+eur(mt);$('cday').classList.add('hide');
+  $('cgrid').innerHTML=h;$('cmtot').textContent='Total do mês: '+eur(mt);if(!Object.keys(getRates()).length)$('cmtot').textContent+=' (defina os valores no Perfil)';$('cday').classList.add('hide');
   $('cgrid').querySelectorAll('button').forEach(b=>b.onclick=()=>drawDay(b.dataset.d,by[b.dataset.d]||[]));
 }
 function drawDay(k,t){
