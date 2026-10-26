@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Migueltech Field App</title>
 <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/5.1.1/tesseract.min.js"></script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;700&family=Barlow+Condensed:wght@600;700&display=swap">
 <style>
@@ -403,6 +404,7 @@ const NEWS=[
 {id:'n2',ts:1792886400000,t:'NOS leva fibra a todos os concelhos',d:'A operadora fala num investimento de 326 milhões de euros em 10 anos para cobrir todo o país, incluindo zonas rurais. Fonte: LinkedIn (data não confirmada).',url:'https://pt.linkedin.com/in/nuno-prates-25a2b48'},
 {id:'n3',ts:1792886400000,t:'Concurso de fibra para o interior',d:'Projeto de cerca de 425 milhões de euros para mais de 400 mil casas, com cobertura do continente prevista até 2026/2027. Fonte: Pplware (data não confirmada).',url:'https://pplware.sapo.pt/?p=964250'}];
 async function vote(nid,v){
+  if(SBMODE)return sbVote(nid,v);
   const id=nid+'_'+(myId||'local'),ex=(feeds.votes||[]).find(x=>x.id===id),nv=ex&&ex.v===v?0:v,o={news:nid,v:nv,ts:Date.now()};
   if(DB){try{await DB.collection('votes').doc(id).set(o);return}catch(e){toast('Sem permissão para votar. Voto guardado só aqui.')}}
   feeds.votes=(feeds.votes||[]).filter(x=>x.id!==id).concat([{id,...o}]);store.set('mt_votes',feeds.votes);drawCom();
@@ -414,7 +416,8 @@ function drawNews(){
   $('n_list').innerHTML='<div class="text-xs" style="color:var(--mu)">'+(real?'Atualizado em '+new Date(Math.max(...L.map(x=>x.ts||0))).toLocaleDateString('pt-PT'):'Resumo recolhido a 25/10/2026.')+'</div>'+L.map(n=>{const u=V.filter(x=>x.news===n.id&&x.v===1).length,d=V.filter(x=>x.news===n.id&&x.v===-1).length,me=me0(n.id),st=a=>me===a?'border-color:var(--ac);color:var(--ac)':'';return `<div class="card p-3"><a target="_blank" rel="noopener" href="${esc(n.url)}"><b class="hd text-lg">${esc(n.t)}</b></a><p class="text-sm mt-1" style="color:var(--mu)">${esc(n.d)}</p><div class="text-xs mt-1" style="color:var(--ac)">Fonte: ${esc(n.fonte||'ver liga')}${n.data?' · '+esc(n.data):''}</div><div class="flex gap-2 mt-2"><button class="btn2 text-sm flex-1" style="${st(1)}" onclick="vote('${esc(n.id)}',1)">Gosto (${u})</button><button class="btn2 text-sm flex-1" style="${st(-1)}" onclick="vote('${esc(n.id)}',-1)">Não gosto (${d})</button></div></div>`}).join('');
 }
 async function initCom(){
-  if(initCom.done)return;initCom.done=1;
+  if(initCom.done){if(SBMODE)sbLoad();return}initCom.done=1;
+  if(sbInit()){try{const{data}=await sb.auth.getSession();if(data&&data.session){SBMODE=true;myId=data.session.user.id;await sbLoad();return}}catch(e){}}
   try{if(window.claude&&typeof claude.use==='function'){DB=await claude.use('db');const u=await claude.use('user');if(u&&u.id)myId=await u.id()}}catch(e){}
   for(const k of ['incidents','forum','news','votes']){
     if(DB){try{DB.collection(k).orderBy('ts','desc').limit(k==='news'?10:100).onSnapshot(s=>{feeds[k]=s.docs.map(d=>({id:d.id,...d.data()}));drawCom()},()=>{DB=null;$('modo').textContent='Apenas neste dispositivo';feeds[k]=store.get('mt_'+k,[]);drawCom()})}catch(e){DB=null;feeds[k]=store.get('mt_'+k,[])}}
@@ -424,6 +427,7 @@ async function initCom(){
   drawCom();
 }
 async function addItem(k,o){
+  if(SBMODE){o.autor=store.get('mt_cfg',DEF).nome||'Técnico';return sbAdd(k,o)}
   o.ts=Date.now();o.autor=store.get('mt_cfg',DEF).nome||'Técnico';
   if(DB){try{await DB.collection(k).add(o);return true}catch(e){toast('Sem permissão para partilhar. Guardado só aqui.')}}
   o.id=String(o.ts);feeds[k].unshift(o);store.set('mt_'+k,feeds[k]);drawCom();return true;
@@ -508,9 +512,9 @@ applyOp(store.get('mt_op','nos'));
 const users=()=>store.get('mt_users',[]),norm=s=>String(s).trim().toLowerCase(),lmsg=m=>{$('lmsg').textContent=m};
 async function hashPw(p,salt){try{const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(salt+p));return[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}catch(e){return btoa(unescape(encodeURIComponent(salt+p)))}}
 const newSalt=()=>Array.from({length:16},()=>Math.floor(Math.random()*16).toString(16)).join('');
-function startAuth(){const on=store.get('mt_login_on',false),ses=store.get('mt_session',null);$('c_login').value=on?'1':'0';$('login').classList.toggle('hide',!(on&&!(ses&&users().some(u=>u.email===ses))));maybeOnb()}
+function startAuthLocal(){const on=store.get('mt_login_on',false),ses=store.get('mt_session',null);$('c_login').value=on?'1':'0';$('login').classList.toggle('hide',!(on&&!(ses&&users().some(u=>u.email===ses))));maybeOnb()}
 document.querySelectorAll('.lseg').forEach(b=>b.onclick=()=>{document.querySelectorAll('.lseg').forEach(x=>{x.className=(x===b?'btn':'btn2')+' flex-1 lseg'});['in','new','rec'].forEach(k=>$('l-'+k).classList.toggle('hide',k!==b.dataset.l));lmsg('')});
-$('ln_go').onclick=async()=>{
+$('ln_go').onclick=async()=>{if(sbInit())return sbSignUp();
   const n=$('ln_n').value.trim(),e=norm($('ln_e').value),p=$('ln_p').value,us=users();
   if(n.length<2)return lmsg('Indique o nome.');
   if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e))return lmsg('Email inválido.');
@@ -521,18 +525,18 @@ $('ln_go').onclick=async()=>{
   const salt=newSalt();us.push({nome:n,email:e,salt,hash:await hashPw(p,salt)});store.set('mt_users',us);store.set('mt_session',e);
   const c=store.get('mt_cfg',DEF);c.nome=n;store.set('mt_cfg',c);loadCfg();startAuth();toast('Conta criada');
 };
-$('li_go').onclick=async()=>{
+$('li_go').onclick=async()=>{if(sbInit())return sbSignIn();
   const q=norm($('li_u').value),u=users().find(x=>x.email===q||norm(x.nome)===q);
   if(!u||u.hash!==await hashPw($('li_p').value,u.salt))return lmsg('Dados incorretos.');
   store.set('mt_session',u.email);startAuth();
 };
-$('lr_send').onclick=()=>{
+$('lr_send').onclick=()=>{if(sbInit())return sbRecover();
   const e=norm($('lr_e').value);if(!users().some(u=>u.email===e))return lmsg('Não existe conta com esse email.');
   const code=String(Math.floor(100000+Math.random()*900000));store.set('mt_rec',{email:e,code,exp:Date.now()+15*60000});
   window.open('mailto:'+e+'?subject='+encodeURIComponent('Código de recuperação - Migueltech Field App')+'&body='+encodeURIComponent('O seu código é '+code+'. Válido durante 15 minutos.'),'_blank');
   lmsg('Código preparado no seu email. Escreva-o abaixo.');
 };
-$('lr_go').onclick=async()=>{
+$('lr_go').onclick=async()=>{if(sbInit())return lmsg('Use o link enviado ao seu email para definir a nova password.');
   const r=store.get('mt_rec',null),p=$('lr_p').value;
   if(!r||r.email!==norm($('lr_e').value)||r.code!==$('lr_c').value.trim()||Date.now()>r.exp)return lmsg('Código inválido ou expirado.');
   if(p.length<8)return lmsg('A password precisa de pelo menos 8 caracteres.');
@@ -540,7 +544,7 @@ $('lr_go').onclick=async()=>{
   lmsg('Password redefinida. Já pode entrar.');document.querySelector('.lseg[data-l=in]').click();
 };
 $('c_login').onchange=e=>{store.set('mt_login_on',e.target.value==='1');toast(e.target.value==='1'?'Login ligado. Pede-se ao reabrir ou terminar sessão.':'Login desligado')};
-$('c_out').onclick=()=>{try{localStorage.removeItem('mt_session')}catch(e){}startAuth();if(!store.get('mt_login_on',false))toast('O login está desligado.')};
+$('c_out').onclick=()=>{if(sbInit()){sb.auth.signOut().then(()=>{SBMODE=false;myId=null;startAuth()});return}try{localStorage.removeItem('mt_session')}catch(e){}startAuth();if(!store.get('mt_login_on',false))toast('O login está desligado.')};
 startAuth();
 $('calcbtn').onclick=()=>{const open=$('calcbox').classList.toggle('hide')===false;$('calcbtn').setAttribute('aria-expanded',open);$('calcarrow').textContent=open?'▲ Retrair':'▼ Expandir'};
 
@@ -568,6 +572,102 @@ $('ob_next').onclick=()=>{
 $('c_onb').onclick=()=>{document.querySelector('[data-v=new]').click();obShow(1)};
 maybeOnb();
 function contaLbl(){return store.get('mt_op','nos')==='vodafone'?'Acesso':'Conta de serviço'}
+
+// ===== Supabase (contas e dados partilhados) =====
+const SB_URL='https://yaiggohnmpzbcralsgix.supabase.co',SB_KEY='sb_publishable_Mz59HJH158nIbLkQTs_Llw_ji_YpQbT';
+var sb=null,SBMODE=false,pushT=null;
+const _set=store.set.bind(store);
+store.set=(k,v)=>{_set(k,v);if(/^mt_(cfg|op$|rates_)/.test(k))schedPush();if(k==='mt_hist')setTimeout(syncTasks,300)};
+function sbInit(){
+  if(sb)return sb;
+  try{if(window.supabase){sb=window.supabase.createClient(SB_URL,SB_KEY);
+    sb.auth.onAuthStateChange(ev=>{if(ev==='PASSWORD_RECOVERY'){const p=prompt('Nova password (mínimo 8 caracteres):');if(p&&p.length>=8)sb.auth.updateUser({password:p}).then(r=>toast(r.error?'Erro: '+r.error.message:'Password alterada'));else toast('A password precisa de pelo menos 8 caracteres')}})}}catch(e){sb=null}
+  return sb;
+}
+function startAuth(){
+  if(!sbInit())return startAuthLocal();
+  const on=store.get('mt_login_on',false);$('c_login').value=on?'1':'0';
+  sb.auth.getSession().then(({data})=>{const ok=!!(data&&data.session);$('login').classList.toggle('hide',!on||ok);if(ok)afterLogin(data.session.user);maybeOnb()}).catch(()=>{$('login').classList.toggle('hide',!on);maybeOnb()});
+}
+async function sbSignUp(){
+  const n=$('ln_n').value.trim(),e=norm($('ln_e').value),p=$('ln_p').value;
+  if(n.length<2)return lmsg('Indique o nome.');
+  if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e))return lmsg('Email inválido.');
+  if(p.length<8)return lmsg('A password precisa de pelo menos 8 caracteres.');
+  if(p!==$('ln_c').value)return lmsg('As passwords não coincidem.');
+  lmsg('A criar conta...');
+  const{data,error}=await sb.auth.signUp({email:e,password:p,options:{data:{nome:n},emailRedirectTo:location.origin+location.pathname}});
+  if(error)return lmsg(/database|already|duplicate/i.test(error.message)?'Esse nome ou email já está em uso.':'Erro: '+error.message);
+  if(data.user&&data.user.identities&&!data.user.identities.length)return lmsg('Esse email já está registado.');
+  if(!data.session)return lmsg('Conta criada. Confirme o email enviado para '+e+' e depois entre.');
+  startAuth();
+}
+async function sbSignIn(){
+  const e=norm($('li_u').value);if(!e.includes('@'))return lmsg('Entre com o email da conta.');
+  const{error}=await sb.auth.signInWithPassword({email:e,password:$('li_p').value});
+  if(error)return lmsg('Dados incorretos ou email por confirmar.');
+  startAuth();
+}
+async function sbRecover(){
+  const e=norm($('lr_e').value);if(!e.includes('@'))return lmsg('Indique o email da conta.');
+  await sb.auth.resetPasswordForEmail(e,{redirectTo:location.origin+location.pathname});
+  lmsg('Se o email existir, enviámos um link para definir a nova password.');
+}
+async function afterLogin(u){
+  SBMODE=true;myId=u.id;
+  try{
+    const{data:p}=await sb.from('profiles').select('*').eq('id',u.id).single();
+    if(p){
+      if(p.ativo===false){toast('Conta bloqueada pelo administrador');await sb.auth.signOut();SBMODE=false;startAuth();return}
+      const c=store.get('mt_cfg',DEF);Object.assign(c,{nome:p.nome,emp:p.empresa||c.emp,empr:p.empreiteira||'',pais:p.pais||'',mail:c.mail||p.email});_set('mt_cfg',c);loadCfg();
+      const v=p.valores||{};['nos','vodafone','meo'].forEach(o=>{if(v[o]&&Object.keys(v[o]).length)_set('mt_rates_'+o,v[o])});
+      if(p.operadora&&p.operadora!==store.get('mt_op','nos'))applyOp(p.operadora);else renderRates();
+    }
+    const{data:t}=await sb.from('tarefas').select('*').order('feita_em',{ascending:false}).limit(500);
+    if(t&&t.length){const h=store.get('mt_hist',[]),have=new Set(h.map(x=>x.cid).filter(Boolean));t.forEach(x=>{if(!have.has(x.id))h.push({id:Date.parse(x.feita_em),cid:x.id,tipo:x.tipo,wo:x.wo||'',cli:'',mor:'',valor:+x.valor,op:x.operadora,data:x.feita_em,txt:'(sincronizada da conta)'})});h.sort((a,b)=>b.id-a.id);_set('mt_hist',h)}
+  }catch(e){}
+  syncTasks();schedPush();
+}
+function schedPush(){if(!sb||!myId||!SBMODE)return;clearTimeout(pushT);pushT=setTimeout(pushProfile,800)}
+async function pushProfile(){
+  const c=store.get('mt_cfg',DEF),valores={};['nos','vodafone','meo'].forEach(o=>valores[o]=store.get('mt_rates_'+o,{}));
+  const{error}=await sb.from('profiles').update({nome:c.nome,empresa:c.emp||'',empreiteira:c.empr||'',pais:c.pais||'',operadora:store.get('mt_op','nos'),valores}).eq('id',myId);
+  if(error)toast(/duplicate|unique/i.test(error.message)?'Esse nome já está em uso por outro técnico.':'Perfil não sincronizado');
+}
+async function syncTasks(){
+  if(!sb||!myId||!SBMODE)return;
+  const h=store.get('mt_hist',[]);let ch=false;
+  for(const x of h){if(x.cid)continue;
+    const{data,error}=await sb.from('tarefas').insert({operadora:x.op||store.get('mt_op','nos'),tipo:x.tipo,wo:x.wo||null,valor:val(x),feita_em:x.data}).select('id').single();
+    if(error)break;x.cid=data.id;ch=true}
+  if(ch)_set('mt_hist',h);
+}
+async function sbLoad(){
+  try{
+    const q=(t,n)=>sb.from(t).select('*').order('criado_em',{ascending:false}).limit(n);
+    const[i,f,n,v]=await Promise.all([q('incidentes',100),q('forum',100),q('noticias',10),sb.from('votos').select('*')]);
+    const T=s=>Date.parse(s);
+    feeds.incidents=(i.data||[]).map(x=>({id:x.id,tipo:x.tipo,loc:x.local,desc:x.descricao,lat:x.lat,lon:x.lon,autor:x.autor,ts:T(x.criado_em)}));
+    feeds.forum=(f.data||[]).map(x=>({id:x.id,txt:x.texto,foto:x.foto,lat:x.lat,lon:x.lon,autor:x.autor,ts:T(x.criado_em)}));
+    feeds.news=(n.data||[]).map(x=>({id:x.id,t:x.titulo,d:x.texto,fonte:x.fonte,data:x.data_texto,url:x.url,ts:T(x.criado_em)}));
+    feeds.votes=(v.data||[]).map(x=>({id:x.noticia_id+'_'+x.user_id,news:x.noticia_id,v:x.v}));
+    $('modo').textContent='Partilhado com os técnicos (conta)';drawCom();
+  }catch(e){toast('Sem ligação à base de dados')}
+}
+async function sbAdd(k,o){
+  const t=k==='incidents'?'incidentes':'forum',row=k==='incidents'?{autor:o.autor,tipo:o.tipo,local:o.loc,descricao:o.desc,lat:o.lat,lon:o.lon}:{autor:o.autor,texto:o.txt,foto:o.foto,lat:o.lat,lon:o.lon};
+  const{error}=await sb.from(t).insert(row);
+  if(error){toast('Não foi possível enviar: '+error.message);return false}
+  await sbLoad();return true;
+}
+async function sbVote(nid,v){
+  if(!/^[0-9a-f-]{36}$/.test(nid)){toast('Esta notícia ainda não está na base de dados');return}
+  const ex=(feeds.votes||[]).find(x=>x.news===nid&&x.id.endsWith('_'+myId)),nv=ex&&ex.v===v?0:v;
+  const{error}=await sb.from('votos').upsert({noticia_id:nid,user_id:myId,v:nv});
+  if(error){toast('Não foi possível votar');return}
+  await sbLoad();
+}
+startAuth();
 </script>
 </body>
 </html>
