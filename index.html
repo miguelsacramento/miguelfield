@@ -234,14 +234,18 @@ function parse(t){
   let inst=eq('instalad'),rec=eq('recolhid');
   const nxt=re=>{const i=lines.findIndex(l=>re.test(l));return i>=0&&lines[i+1]?lines[i+1].replace(/^[^A-Za-z0-9À-ú]+/,'').trim():''};
   if(!inst.length&&!rec.length){
-    inst=lines.filter(l=>/\bS\/?N\b/i.test(l));
-    lines.forEach((l,i)=>{const m=l.match(/N[º°o]?\s*S[ée]rie\s*:?\s*([A-Z0-9]{8,})/i);if(m){let nm='';for(let j=i-1;j>=Math.max(0,i-3);j--){if(/router|ont|box|extender|kaon|plume|decoder/i.test(lines[j])){nm=lines[j];break}}inst.push((nm?nm+' ':'')+'SN: '+m[1])}});
+    inst=[];
+    lines.forEach((l,i)=>{const m=l.match(/\bs\/?n\s*:?\s*([A-Z0-9]{6,})/i);if(!m)return;let nm=[];const K=/^(tv\s*box|ont|router|extender|box|decoder|repetidor|mesh|set)/i;for(let j=i-1;j>=Math.max(0,i-3);j--){nm.unshift(lines[j]);if(K.test(lines[j]))break}const n=nm.length&&K.test(nm[0])?nm.join(' ').replace(/\s+[\]\[|}{i)(]{1,3}$/,'').trim():'';inst.push((n?n+' ':'')+'SN: '+m[1])});
+    lines.forEach((l,i)=>{const m=l.match(/N[º°o]?\s*S[^\s]{2,4}\s*:?\s*([A-Z0-9]{8,})/i);if(m){let nm='';for(let j=i-1;j>=Math.max(0,i-3);j--){if(/router|ont|box|extender|kaon|plume|decoder/i.test(lines[j])){nm=(lines[j].match(/router[\d. ]*ftth|nos ?box ?v?\d|extender[ -]*wi-?fi[ -]*plume|ont/i)||[lines[j]])[0];break}}inst.push((nm?nm+' ':'')+'SN: '+m[1])}});
   }
+  let mor='';const mi=lines.findIndex(l=>/^Morada/i.test(l));
+  if(mi>=0){const p=[lines[mi].replace(/^Morada\s*:?\s*/i,'')];for(let k=mi+1;k<lines.length&&k<mi+5;k++){if(/abrir mapa|^tipo\b|fechar|estado|^(nome|cliente|contacto)/i.test(lines[k]))break;p.push(lines[k])}mor=p.join(' ').replace(/(\s*-\s*){2,}/g,' - ').replace(/\s+/g,' ').trim()}
+  {const sn=new Set();inst=inst.filter(x=>{const k=(x.match(/SN:\s*(\S+)/)||[x])[1];if(sn.has(k))return false;sn.add(k);return true})}
   return{wo:g(/\b(?:WO|OT|Ordem[^:\n]*)\s*[:#-]?\s*([A-Z]{0,3}-?\d[\w-]{4,})/i),
-    conta:g(/Conta[^:\n]*:\s*([\d.\-]+)/i),
-    cli:g(/Cliente\s*:\s*(.+)/i)||nxt(/^Nome\s+de\s+cliente/i),
+    conta:g(/Conta[^:\n]*:\s*([\d.\-]+)/i)||g(/acesso\s+(\d{6,})/i),
+    cli:(g(/^(?:Nome|Cliente)\s*:\s*(.+)/im)||g(/^(?:Nome|Cliente)[ \t]+(?!de\b)([A-ZÀ-Ú][\wÀ-ú ]{3,})\s*$/im)||nxt(/^Nome\s+de\s+\w+/i)).replace(/(\s+\S{1,2})+\s*$/,'').replace(/[.,;]+$/,'').trim(),
     tel:g(/(?:Telem[óo]vel|Contacto|Tel\w*)\s*:\s*([\d +]{9,})/i)||g(/\b([239]\d{2}\s?\d{3}\s?\d{3})\b/),
-    mor:g(/Morada\s*:\s*(.+)/i)||nxt(/^Morada/i),inst:inst.join('\n'),rec:rec.join('\n')};
+    mor:mor,inst:inst.join('\n'),rec:rec.join('\n')};
 }
 function showForm(){$('form').classList.remove('hide')}
 function fill(d){
