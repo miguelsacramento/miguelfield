@@ -54,7 +54,7 @@ label{font-size:.78rem;color:var(--mu);display:block;margin:.6rem 0 .2rem}
     <div id="form" class="card p-4 mt-4 hide">
       <h2 class="text-xl font-bold">Resumo para conferir</h2>
       <details class="mt-2"><summary class="text-xs cursor-pointer" style="color:var(--mu)">Texto lido pelo OCR (para diagnóstico)</summary><pre id="ocrtxt" class="text-xs whitespace-pre-wrap mt-1" style="color:var(--mu)"></pre></details>
-      <label>WO</label><input id="wo" class="inp">
+      <label>WO / OT</label><input id="wo" class="inp">
       <label>Conta de serviço</label><input id="conta" class="inp">
       <label>Cliente</label><input id="cli" class="inp">
       <label>Contacto</label><input id="tel" class="inp" inputmode="tel">
@@ -232,12 +232,16 @@ function parse(t){
   const lines=t.split('\n').map(s=>s.trim()).filter(Boolean);
   const eq=k=>lines.filter(l=>new RegExp('^'+k,'i').test(l)).map(l=>l.replace(new RegExp('^'+k+'\\w*\\s*:?\\s*','i'),''));
   let inst=eq('instalad'),rec=eq('recolhid');
-  if(!inst.length&&!rec.length)inst=lines.filter(l=>/\bS\/?N\b/i.test(l));
-  return{wo:g(/\b(?:WO|Ordem[^:\n]*)\s*[:#-]?\s*([A-Z]{0,3}-?\d[\w-]{4,})/i),
+  const nxt=re=>{const i=lines.findIndex(l=>re.test(l));return i>=0&&lines[i+1]?lines[i+1].replace(/^[^A-Za-z0-9À-ú]+/,'').trim():''};
+  if(!inst.length&&!rec.length){
+    inst=lines.filter(l=>/\bS\/?N\b/i.test(l));
+    lines.forEach((l,i)=>{const m=l.match(/N[º°o]?\s*S[ée]rie\s*:?\s*([A-Z0-9]{8,})/i);if(m){let nm='';for(let j=i-1;j>=Math.max(0,i-3);j--){if(/router|ont|box|extender|kaon|plume|decoder/i.test(lines[j])){nm=lines[j];break}}inst.push((nm?nm+' ':'')+'SN: '+m[1])}});
+  }
+  return{wo:g(/\b(?:WO|OT|Ordem[^:\n]*)\s*[:#-]?\s*([A-Z]{0,3}-?\d[\w-]{4,})/i),
     conta:g(/Conta[^:\n]*:\s*([\d.\-]+)/i),
-    cli:g(/Cliente\s*:\s*(.+)/i),
+    cli:g(/Cliente\s*:\s*(.+)/i)||nxt(/^Nome\s+de\s+cliente/i),
     tel:g(/(?:Telem[óo]vel|Contacto|Tel\w*)\s*:\s*([\d +]{9,})/i)||g(/\b([239]\d{2}\s?\d{3}\s?\d{3})\b/),
-    mor:g(/Morada\s*:\s*(.+)/i),inst:inst.join('\n'),rec:rec.join('\n')};
+    mor:g(/Morada\s*:\s*(.+)/i)||nxt(/^Morada/i),inst:inst.join('\n'),rec:rec.join('\n')};
 }
 function showForm(){$('form').classList.remove('hide')}
 function fill(d){
@@ -249,7 +253,7 @@ function report(){
   const c=store.get('mt_cfg',DEF),nl=s=>(s||'—').split('\n').map(x=>'  • '+x).join('\n');
   $('rel').value=`📋 RELATÓRIO DE INTERVENÇÃO
 Tipo: ${$('tipo').value}
-WO: ${$('wo').value||'—'}
+WO/OT: ${$('wo').value||'—'}
 Conta de serviço: ${$('conta').value||'—'}
 Cliente: ${$('cli').value||'—'}
 Contacto: ${$('tel').value||'—'}
