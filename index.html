@@ -141,10 +141,6 @@ label{font-size:.78rem;color:var(--mu);display:block;margin:.6rem 0 .2rem}
     <label>Empreiteira</label><input id="c_empr" class="inp">
     <label>Email de destino (para enviar o relatório)</label><input id="c_mail" class="inp" type="email">
     <label>Telegram: chat ID</label><input id="c_chat" class="inp">
-    <h2 class="text-xl font-bold mt-5">Calculadora do técnico</h2>
-    <p class="text-xs" style="color:var(--mu)">Valor de cada tarefa, para a operadora escolhida no topo. O calendário do Histórico soma por dia.</p>
-    <div id="rates"></div>
-    <button id="rsave" class="btn w-full mt-3">Guardar valores</button>
     <label>Login</label>
     <select id="c_login" class="inp"><option value="0">Desligado (modo de teste)</option><option value="1">Ligado</option></select>
     <button id="c_out" class="btn2 w-full mt-3">Terminar sessão</button>
@@ -152,6 +148,12 @@ label{font-size:.78rem;color:var(--mu);display:block;margin:.6rem 0 .2rem}
     <select id="c_tema" class="inp"><option value="dark">Escuro</option><option value="light">Claro (para ver ao sol)</option></select>
     <button id="save" class="btn w-full mt-4">Guardar perfil</button>
     <p class="text-xs mt-2" style="color:var(--mu)">Os dados ficam apenas neste dispositivo.</p>
+    <button id="calcbtn" class="btn2 w-full mt-4">Calculadora do técnico</button>
+    <div id="calcbox" class="hide mt-3">
+      <p class="text-xs" style="color:var(--mu)">Valor de cada tarefa, para a operadora escolhida no topo. O calendário do Histórico soma por dia.</p>
+      <div id="rates"></div>
+      <button id="rsave" class="btn w-full mt-3">Guardar valores</button>
+    </div>
   </div>
 </section>
 </main>
@@ -523,6 +525,7 @@ $('lr_go').onclick=async()=>{
 $('c_login').onchange=e=>{store.set('mt_login_on',e.target.value==='1');toast(e.target.value==='1'?'Login ligado. Pede-se ao reabrir ou terminar sessão.':'Login desligado')};
 $('c_out').onclick=()=>{try{localStorage.removeItem('mt_session')}catch(e){}startAuth();if(!store.get('mt_login_on',false))toast('O login está desligado.')};
 startAuth();
+$('calcbtn').onclick=()=>$('calcbox').classList.toggle('hide');
 </script>
 </body>
 </html>
