@@ -194,8 +194,8 @@ label{font-size:.78rem;color:var(--mu);display:block;margin:.6rem 0 .2rem}
   <p class="text-center text-sm mb-4" style="color:var(--mu)">Entre para continuar</p>
   <div class="flex gap-2 mb-3"><button class="btn flex-1 lseg" data-l="in">Entrar</button><button class="btn2 flex-1 lseg" data-l="new">Criar conta</button><button class="btn2 flex-1 lseg" data-l="rec">Recuperar</button></div>
   <div class="card p-4">
-   <div id="l-in"><label>Email ou nome</label><input id="li_u" class="inp" autocomplete="username"><label>Password</label><input id="li_p" type="password" class="inp" autocomplete="current-password"><button id="li_go" class="btn w-full mt-4">Entrar</button></div>
-   <div id="l-new" class="hide"><label>Nome</label><input id="ln_n" class="inp"><label>Email</label><input id="ln_e" type="email" class="inp"><label>Password (mínimo 8 caracteres)</label><input id="ln_p" type="password" class="inp" autocomplete="new-password"><label>Confirmar password</label><input id="ln_c" type="password" class="inp" autocomplete="new-password"><button id="ln_go" class="btn w-full mt-4">Criar conta</button></div>
+   <div id="l-in"><label>Email</label><input id="li_u" type="email" class="inp" autocomplete="email" inputmode="email"><label>Password</label><input id="li_p" type="password" class="inp" autocomplete="current-password"><button id="li_go" class="btn w-full mt-4">Entrar</button></div>
+   <div id="l-new" class="hide"><label>Nome</label><input id="ln_n" class="inp"><label>Email</label><input id="ln_e" type="email" class="inp"><label>Telefone</label><input id="ln_t" type="tel" class="inp" inputmode="tel" autocomplete="tel" placeholder="Ex.: 912345678"><label>Password (mínimo 8 caracteres)</label><input id="ln_p" type="password" class="inp" autocomplete="new-password"><label>Confirmar password</label><input id="ln_c" type="password" class="inp" autocomplete="new-password"><button id="ln_go" class="btn w-full mt-4">Criar conta</button></div>
    <div id="l-rec" class="hide"><label>Email da conta</label><input id="lr_e" type="email" class="inp"><button id="lr_send" class="btn2 w-full mt-3">Enviar código por email</button><label>Código recebido</label><input id="lr_c" class="inp" inputmode="numeric"><label>Nova password (mínimo 8 caracteres)</label><input id="lr_p" type="password" class="inp" autocomplete="new-password"><button id="lr_go" class="btn w-full mt-3">Redefinir password</button></div>
    <div id="lmsg" class="text-sm mt-3" style="color:var(--ac)"></div>
   </div>
@@ -602,26 +602,44 @@ function sbInit(){
 }
 function startAuth(){
   if(!sbInit())return startAuthLocal();
-  const on=store.get('mt_login_on',false);$('c_login').value=on?'1':'0';
-  sb.auth.getSession().then(({data})=>{const ok=!!(data&&data.session);$('login').classList.toggle('hide',!on||ok);if(ok)afterLogin(data.session.user);maybeOnb()}).catch(()=>{$('login').classList.toggle('hide',!on);maybeOnb()});
+  const on=true;$('c_login').value='1';$('c_login').disabled=true;
+  sb.auth.getSession().then(({data})=>{const ok=!!(data&&data.session);$('login').classList.toggle('hide',!on||ok);if(ok)afterLogin(data.session.user);else lockTick();maybeOnb()}).catch(()=>{$('login').classList.toggle('hide',!on);maybeOnb()});
 }
 async function sbSignUp(){
   const n=$('ln_n').value.trim(),e=norm($('ln_e').value),p=$('ln_p').value;
   if(n.length<2)return lmsg('Indique o nome.');
   if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e))return lmsg('Email inválido.');
+  const tel=($('ln_t').value||'').replace(/\D/g,'').replace(/^00/,'');
+  if(!/^\d{9,15}$/.test(tel))return lmsg('Telefone inválido (9 a 15 dígitos).');
   if(p.length<8)return lmsg('A password precisa de pelo menos 8 caracteres.');
   if(p!==$('ln_c').value)return lmsg('As passwords não coincidem.');
   lmsg('A criar conta...');
-  const{data,error}=await sb.auth.signUp({email:e,password:p,options:{data:{nome:n},emailRedirectTo:location.origin+location.pathname}});
-  if(error)return lmsg(/database|already|duplicate/i.test(error.message)?'Esse nome ou email já está em uso.':'Erro: '+error.message);
+  const{data,error}=await sb.auth.signUp({email:e,password:p,options:{data:{nome:n,telefone:tel},emailRedirectTo:location.origin+location.pathname}});
+  if(error)return lmsg(/database|already|duplicate/i.test(error.message)?'Nome, email ou telefone já está em uso (ou dados inválidos).':'Erro: '+error.message);
   if(data.user&&data.user.identities&&!data.user.identities.length)return lmsg('Esse email já está registado.');
   if(!data.session)return lmsg('Conta criada. Confirme o email enviado para '+e+' e depois entre.');
   startAuth();
 }
+var LOCK_KEY='mt_lock',LOCK_MAX=3,LOCK_SEC=30,lockT=null;
+function lockGet(){try{return JSON.parse(localStorage.getItem(LOCK_KEY)||'{}')}catch(e){return{}}}
+function lockSet(o){try{localStorage.setItem(LOCK_KEY,JSON.stringify(o))}catch(e){}}
+function lockLeft(){return Math.max(0,Math.ceil(((lockGet().until||0)-Date.now())/1000))}
+function lockTick(){
+  clearTimeout(lockT);const t=lockLeft(),b=$('li_go');
+  if(t>0){b.disabled=true;lmsg('Demasiadas tentativas. Aguarde '+t+'s para tentar de novo.');lockT=setTimeout(lockTick,500)}
+  else if(b.disabled){b.disabled=false;lmsg('')}
+}
 async function sbSignIn(){
+  if(lockLeft()>0)return lockTick();
   const e=norm($('li_u').value);if(!e.includes('@'))return lmsg('Entre com o email da conta.');
   const{error}=await sb.auth.signInWithPassword({email:e,password:$('li_p').value});
-  if(error)return lmsg('Dados incorretos ou email por confirmar.');
+  if(error){
+    const s=lockGet(),n=(s.n||0)+1;
+    if(n>=LOCK_MAX){lockSet({n:0,until:Date.now()+LOCK_SEC*1000});return lockTick()}
+    lockSet({n:n,until:0});
+    return lmsg('Dados incorretos ou email por confirmar. Tentativa '+n+' de '+LOCK_MAX+'.');
+  }
+  lockSet({});
   startAuth();
 }
 async function sbRecover(){
