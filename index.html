@@ -24,6 +24,7 @@ label{font-size:.78rem;color:var(--mu);display:block;margin:.6rem 0 .2rem}
 .btn2{background:transparent;border:1px solid var(--ln);color:var(--tx);border-radius:8px;padding:.7rem 1rem}
 .tab{flex:1;padding:.7rem 0;color:var(--mu);font-size:.8rem}.tab.on{color:var(--ac)}
 .hide{display:none!important}
+.vip{display:inline-block;font-size:.68rem;font-weight:700;padding:.05rem .45rem;border-radius:999px;background:#f5c542;color:#2a1d00;vertical-align:middle;white-space:nowrap}
 :root[data-theme=light][data-op=nos]{--ac:#0b57d0;--onac:#fff}
 :root[data-theme=light][data-op=vodafone]{--ac:#e60000;--onac:#fff}
 :root[data-theme=light][data-op=meo]{--ac:#111;--onac:#fff}
@@ -136,7 +137,7 @@ label{font-size:.78rem;color:var(--mu);display:block;margin:.6rem 0 .2rem}
 <!-- CONFIG -->
 <section id="v-cfg" class="hide">
   <div class="card p-4">
-    <h2 class="text-xl font-bold">Perfil do técnico</h2>
+    <h2 class="text-xl font-bold">Perfil do técnico <span id="vipb" class="vip hide">⭐ VIP</span></h2>
     <label>Nome</label><input id="c_nome" class="inp">
     <label>País / Zona</label><input id="c_pais" class="inp">
     <label>Empresa</label><input id="c_emp" class="inp">
@@ -157,6 +158,12 @@ label{font-size:.78rem;color:var(--mu);display:block;margin:.6rem 0 .2rem}
       <div id="rates"></div>
       <button id="rsave" class="btn w-full mt-3">Guardar valores</button>
     </div>
+  </div>
+  <div id="adm" class="card p-4 mt-4 hide">
+    <h2 class="text-xl font-bold">Administração</h2>
+    <p class="text-xs" style="color:var(--mu)">Só o admin vê esta área. A tag VIP só pode ser concedida aqui.</p>
+    <input id="adm_q" class="inp mt-2" placeholder="Procurar por nome, email ou telefone">
+    <div id="adm_list" class="mt-3 space-y-2"></div>
   </div>
 </section>
 </main>
@@ -481,8 +488,8 @@ function drawCom(){
     svg=`<svg viewBox="0 0 320 180" class="w-full" style="background:var(--in);border-radius:6px"><g style="stroke:var(--ln)"><path d="M0 60H320M0 120H320M107 0V180M213 0V180"/></g>${gp.map(x=>`<a href="https://www.google.com/maps?q=${x.lat},${x.lon}" target="_blank"><circle cx="${X(x.lon)}" cy="${Y(x.lat)}" r="8" style="fill:var(--ac);stroke:var(--bg)" stroke-width="2"><title>${esc(x.tipo)}</title></circle></a>`).join('')}</svg><div class="text-xs mt-1" style="color:var(--mu)">Esquema dos incidentes com GPS (sem mapa de fundo). Toque num ponto ou em "Abrir no mapa".</div>`;
   }else svg='<div class="text-sm p-3" style="color:var(--mu)">Ainda sem incidentes com GPS. Use "GPS" ao reportar.</div>';
   $('mapa').innerHTML=svg;
-  $('i_list').innerHTML=inc.length?inc.map(x=>`<div class="card p-3"><b>${esc(x.tipo)}</b> <span class="text-xs" style="color:var(--mu)">há ${ago(x.ts)} · ${esc(x.autor)}</span><div class="text-sm">${esc(x.loc)}</div><div class="text-sm" style="color:var(--mu)">${esc(x.desc)}</div>${x.lat!=null?`<a class="text-sm" style="color:var(--ac)" target="_blank" rel="noopener" href="https://www.google.com/maps?q=${x.lat},${x.lon}">Abrir no mapa</a>`:''}</div>`).join(''):'<p class="text-sm text-center" style="color:var(--mu)">Sem incidentes. Reporte o primeiro.</p>';
-  $('f_list').innerHTML=fo.length?fo.map(x=>`<div class="card p-3"><b>${esc(x.autor)}</b> <span class="text-xs" style="color:var(--mu)">há ${ago(x.ts)}</span><div class="text-sm mt-1 whitespace-pre-wrap">${esc(x.txt)}</div>${okImg(x.foto)?`<img src="${x.foto}" alt="Foto do incidente" class="mt-2 rounded w-full">`:''}${x.lat!=null?`<a class="text-sm" style="color:var(--ac)" target="_blank" rel="noopener" href="https://www.google.com/maps?q=${x.lat},${x.lon}">Abrir no mapa</a>`:''}</div>`).join(''):'<p class="text-sm text-center" style="color:var(--mu)">Sem mensagens. Comece a conversa.</p>';
+  $('i_list').innerHTML=inc.length?inc.map(x=>`<div class="card p-3"><b>${esc(x.tipo)}</b> <span class="text-xs" style="color:var(--mu)">há ${ago(x.ts)} · ${esc(x.autor)}</span>${vipTag(x.uid)}<div class="text-sm">${esc(x.loc)}</div><div class="text-sm" style="color:var(--mu)">${esc(x.desc)}</div>${x.lat!=null?`<a class="text-sm" style="color:var(--ac)" target="_blank" rel="noopener" href="https://www.google.com/maps?q=${x.lat},${x.lon}">Abrir no mapa</a>`:''}</div>`).join(''):'<p class="text-sm text-center" style="color:var(--mu)">Sem incidentes. Reporte o primeiro.</p>';
+  $('f_list').innerHTML=fo.length?fo.map(x=>`<div class="card p-3"><b>${esc(x.autor)}</b>${vipTag(x.uid)} <span class="text-xs" style="color:var(--mu)">há ${ago(x.ts)}</span><div class="text-sm mt-1 whitespace-pre-wrap">${esc(x.txt)}</div>${okImg(x.foto)?`<img src="${x.foto}" alt="Foto do incidente" class="mt-2 rounded w-full">`:''}${x.lat!=null?`<a class="text-sm" style="color:var(--ac)" target="_blank" rel="noopener" href="https://www.google.com/maps?q=${x.lat},${x.lon}">Abrir no mapa</a>`:''}</div>`).join(''):'<p class="text-sm text-center" style="color:var(--mu)">Sem mensagens. Comece a conversa.</p>';
 }
 
 // Operadora, calendário e calculadora
@@ -560,7 +567,7 @@ $('lr_go').onclick=async()=>{if(sbInit())return lmsg('Use o link enviado ao seu 
   lmsg('Password redefinida. Já pode entrar.');document.querySelector('.lseg[data-l=in]').click();
 };
 $('c_login').onchange=e=>{store.set('mt_login_on',e.target.value==='1');toast(e.target.value==='1'?'Login ligado. Pede-se ao reabrir ou terminar sessão.':'Login desligado')};
-$('c_out').onclick=()=>{if(sbInit()){sb.auth.signOut().then(()=>{SBMODE=false;myId=null;startAuth()});return}try{localStorage.removeItem('mt_session')}catch(e){}startAuth();if(!store.get('mt_login_on',false))toast('O login está desligado.')};
+$('c_out').onclick=()=>{if(sbInit()){sb.auth.signOut().then(()=>{SBMODE=false;myId=null;myRole='tecnico';myVip=false;showRole();startAuth()});return}try{localStorage.removeItem('mt_session')}catch(e){}startAuth();if(!store.get('mt_login_on',false))toast('O login está desligado.')};
 startAuth();
 $('calcbtn').onclick=()=>{const open=$('calcbox').classList.toggle('hide')===false;$('calcbtn').setAttribute('aria-expanded',open);$('calcarrow').textContent=open?'▲ Retrair':'▼ Expandir'};
 
@@ -666,6 +673,7 @@ async function afterLogin(u){
   try{
     const{data:p}=await sb.from('profiles').select('*').eq('id',u.id).single();
     if(p){
+      myRole=p.role||'tecnico';myVip=!!p.vip;showRole();
       if(p.ativo===false){toast('Conta bloqueada pelo administrador');await sb.auth.signOut();SBMODE=false;startAuth();return}
       const c=store.get('mt_cfg',DEF);Object.assign(c,{nome:p.nome,emp:p.empresa||c.emp,empr:p.empreiteira||'',pais:p.pais||'',mail:c.mail||p.email});_set('mt_cfg',c);loadCfg();
       const v=p.valores||{};['nos','vodafone','meo'].forEach(o=>{if(v[o]&&Object.keys(v[o]).length)_set('mt_rates_'+o,v[o])});
@@ -703,10 +711,10 @@ async function syncTasks(){
 async function sbLoad(){
   try{
     const q=(t,n)=>sb.from(t).select('*').order('criado_em',{ascending:false}).limit(n);
-    const[i,f,n,v]=await Promise.all([q('incidentes',100),q('forum',100),q('noticias',10),sb.from('votos').select('*')]);
-    const T=s=>Date.parse(s);
-    feeds.incidents=(i.data||[]).map(x=>({id:x.id,tipo:x.tipo,loc:x.local,desc:x.descricao,lat:x.lat,lon:x.lon,autor:x.autor,ts:T(x.criado_em)}));
-    feeds.forum=(f.data||[]).map(x=>({id:x.id,txt:x.texto,foto:x.foto,lat:x.lat,lon:x.lon,autor:x.autor,ts:T(x.criado_em)}));
+    const[i,f,n,v,vp]=await Promise.all([q('incidentes',100),q('forum',100),q('noticias',10),sb.from('votos').select('*'),sb.rpc('lista_vip')]);
+    const T=s=>Date.parse(s);vipSet=new Set((vp&&vp.data)||[]);
+    feeds.incidents=(i.data||[]).map(x=>({id:x.id,tipo:x.tipo,loc:x.local,desc:x.descricao,lat:x.lat,lon:x.lon,autor:x.autor,uid:x.user_id,ts:T(x.criado_em)}));
+    feeds.forum=(f.data||[]).map(x=>({id:x.id,txt:x.texto,foto:x.foto,lat:x.lat,lon:x.lon,autor:x.autor,uid:x.user_id,ts:T(x.criado_em)}));
     feeds.news=(n.data||[]).map(x=>({id:x.id,t:x.titulo,d:x.texto,fonte:x.fonte,data:x.data_texto,url:x.url,ts:T(x.criado_em)}));
     feeds.votes=(v.data||[]).map(x=>({id:x.noticia_id+'_'+x.user_id,news:x.noticia_id,v:x.v}));
     $('modo').textContent='Partilhado com os técnicos (conta)';drawCom();
@@ -725,6 +733,35 @@ async function sbVote(nid,v){
   if(error){toast('Não foi possível votar');return}
   await sbLoad();
 }
+var myRole='tecnico',myVip=false,vipSet=new Set(),admRows=[];
+const vipTag=uid=>(vipSet&&uid&&vipSet.has(uid))?' <span class="vip">⭐ VIP</span>':'';
+function showRole(){
+  $('vipb').classList.toggle('hide',!myVip);
+  $('adm').classList.toggle('hide',myRole!=='admin');
+  if(myRole==='admin')loadAdmin();else{admRows=[];$('adm_list').innerHTML=''}
+}
+async function loadAdmin(){
+  if(!sb||myRole!=='admin')return;
+  const{data,error}=await sb.from('profiles').select('id,nome,email,telefone,role,ativo,vip,criado_em').order('criado_em',{ascending:false}).limit(500);
+  if(error){$('adm_list').textContent='Erro ao carregar: '+error.message;return}
+  admRows=data||[];drawAdmin();
+}
+function drawAdmin(){
+  const q=($('adm_q').value||'').toLowerCase().trim();
+  const r=admRows.filter(x=>!q||[x.nome,x.email,x.telefone].join(' ').toLowerCase().includes(q));
+  $('adm_list').innerHTML=r.length?r.map(x=>`<div class="card p-3"><div><b>${esc(x.nome)}</b>${x.vip?' <span class="vip">⭐ VIP</span>':''}${x.role==='admin'?' <span class="text-xs" style="color:var(--ac)">admin</span>':''}${x.ativo===false?' <span class="text-xs" style="color:#f87171">bloqueado</span>':''}</div><div class="text-xs" style="color:var(--mu)">${esc(x.email)} · ${esc(x.telefone||'sem telefone')}</div><div class="flex gap-2 mt-2"><button class="btn2 flex-1" data-a="vip" data-id="${esc(x.id)}" data-val="${x.vip?0:1}">${x.vip?'Remover VIP':'Dar VIP'}</button>${x.role==='admin'?'':`<button class="btn2 flex-1" data-a="ativo" data-id="${esc(x.id)}" data-val="${x.ativo===false?1:0}">${x.ativo===false?'Desbloquear':'Bloquear'}</button>`}</div></div>`).join(''):'<div class="text-sm" style="color:var(--mu)">Sem contas.</div>';
+}
+$('adm_q').oninput=drawAdmin;
+$('adm_list').onclick=async e=>{
+  const b=e.target.closest('button[data-a]');if(!b||myRole!=='admin')return;
+  const a=b.dataset.a,val=b.dataset.val==='1';
+  if(a==='ativo'&&!val&&!confirm('Bloquear esta conta? A pessoa deixa de ver e publicar.'))return;
+  b.disabled=true;
+  const{error}=await sb.rpc(a==='vip'?'admin_vip':'admin_ativar',{uid:b.dataset.id,valor:val});
+  if(error){toast('Não foi possível: '+error.message);b.disabled=false;return}
+  toast(a==='vip'?(val?'VIP concedido':'VIP retirado'):(val?'Conta desbloqueada':'Conta bloqueada'));
+  await loadAdmin();sbLoad();
+};
 startAuth();
 </script>
 </body>
