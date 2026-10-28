@@ -603,7 +603,21 @@ function sbInit(){
 function startAuth(){
   if(!sbInit())return startAuthLocal();
   const on=true;$('c_login').value='1';$('c_login').disabled=true;
-  sb.auth.getSession().then(({data})=>{const ok=!!(data&&data.session);$('login').classList.toggle('hide',!on||ok);if(ok)afterLogin(data.session.user);else lockTick();maybeOnb()}).catch(()=>{$('login').classList.toggle('hide',!on);maybeOnb()});
+  sb.auth.getSession().then(({data})=>{const ok=!!(data&&data.session);$('login').classList.toggle('hide',!on||ok);if(ok)afterLogin(data.session.user);else{lockTick();legacyPrefill()}maybeOnb()}).catch(()=>{$('login').classList.toggle('hide',!on);maybeOnb()});
+}
+function legacyInfo(){
+  const us=store.get('mt_users',[]),h=store.get('mt_hist',[]),c=store.get('mt_cfg',DEF),u=us[0]||null;
+  const nome=(u&&u.nome)||(c.nome&&c.nome!==DEF.nome?c.nome:''),email=(u&&u.email)||c.mail||'',n=h.filter(x=>!x.cid).length;
+  return{has:!!(us.length||n),nome:nome,email:email,n:n};
+}
+function legacyPrefill(){
+  if(store.get('mt_sb_seen',false))return;
+  const L=legacyInfo();if(!L.has)return;
+  if(L.nome&&!$('ln_n').value)$('ln_n').value=L.nome;
+  if(L.email&&!$('ln_e').value)$('ln_e').value=L.email;
+  if(L.email&&!$('li_u').value)$('li_u').value=L.email;
+  document.querySelector('.lseg[data-l=new]').click();
+  lmsg('Encontrámos dados guardados neste telemóvel'+(L.n?' ('+L.n+(L.n===1?' tarefa':' tarefas')+')':'')+'. Crie a conta para os guardar na nuvem.');
 }
 async function sbSignUp(){
   const n=$('ln_n').value.trim(),e=norm($('ln_e').value),p=$('ln_p').value;
@@ -648,7 +662,7 @@ async function sbRecover(){
   lmsg('Se o email existir, enviámos um link para definir a nova password.');
 }
 async function afterLogin(u){
-  SBMODE=true;myId=u.id;
+  SBMODE=true;myId=u.id;_set('mt_sb_seen',true);
   try{
     const{data:p}=await sb.from('profiles').select('*').eq('id',u.id).single();
     if(p){
@@ -668,13 +682,23 @@ async function pushProfile(){
   const{error}=await sb.from('profiles').update({nome:c.nome,empresa:c.emp||'',empreiteira:c.empr||'',pais:c.pais||'',operadora:store.get('mt_op','nos'),valores}).eq('id',myId);
   if(error)toast(/duplicate|unique/i.test(error.message)?'Esse nome já está em uso por outro técnico.':'Perfil não sincronizado');
 }
+var syncing=false;
 async function syncTasks(){
-  if(!sb||!myId||!SBMODE)return;
-  const h=store.get('mt_hist',[]);let ch=false;
-  for(const x of h){if(x.cid)continue;
-    const{data,error}=await sb.from('tarefas').insert({operadora:x.op||store.get('mt_op','nos'),tipo:x.tipo,wo:x.wo||null,valor:val(x),feita_em:x.data}).select('id').single();
-    if(error)break;x.cid=data.id;ch=true}
-  if(ch)_set('mt_hist',h);
+  if(!sb||!myId||!SBMODE||syncing)return;
+  syncing=true;
+  try{
+    const pend=store.get('mt_hist',[]).filter(x=>!x.cid);
+    if(!pend.length)return;
+    try{if(!localStorage.getItem('mt_backup_nuvem'))localStorage.setItem('mt_backup_nuvem',JSON.stringify({em:new Date().toISOString(),hist:store.get('mt_hist',[]),cfg:store.get('mt_cfg',DEF),op:store.get('mt_op','nos')}))}catch(e){}
+    const done=new Map();let bad=0;
+    for(const x of pend){
+      const{data,error}=await sb.from('tarefas').insert({operadora:x.op||store.get('mt_op','nos'),tipo:x.tipo,wo:x.wo||null,valor:val(x),feita_em:x.data}).select('id').single();
+      if(error){bad++;continue}done.set(x.id,data.id);
+    }
+    if(done.size){const cur=store.get('mt_hist',[]);cur.forEach(x=>{if(!x.cid&&done.has(x.id))x.cid=done.get(x.id)});_set('mt_hist',cur)}
+    if(done.size&&!store.get('mt_migrado',false))toast(done.size+(done.size===1?' tarefa antiga guardada':' tarefas antigas guardadas')+' na sua conta');
+    if(!bad)_set('mt_migrado',true);
+  }finally{syncing=false}
 }
 async function sbLoad(){
   try{
