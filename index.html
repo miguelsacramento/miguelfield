@@ -47,6 +47,11 @@ button.tile{cursor:pointer}
 .hsum{display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:12px;align-items:start;cursor:pointer;list-style:none}
 .hsum::-webkit-details-marker{display:none}
 .tsum{font-size:.8rem;color:var(--mu);margin-top:.15rem}
+.pb::after,.pi::after{content:'';display:block;height:8px;margin-top:8px;border-radius:999px}
+.pb::after{background:linear-gradient(90deg,var(--ac) var(--p,0%),var(--in) var(--p,0%));transition:background .2s}
+.pi::after{background:linear-gradient(90deg,var(--in) 0,var(--ac) 50%,var(--in) 100%) 0 0/200% 100%;animation:pind 1.2s linear infinite}
+@keyframes pind{to{background-position:-200% 0}}
+@media (prefers-reduced-motion:reduce){.pi::after{animation:none;background:var(--ac)}}
 .sync-ok{color:var(--ok)}.sync-no{color:var(--warn)}
 .hide{display:none!important}
 .vip{display:inline-block;font-size:.68rem;font-weight:700;padding:.05rem .45rem;border-radius:999px;background:#f5c542;color:#2a1d00;vertical-align:middle;white-space:nowrap}
@@ -116,7 +121,7 @@ button.tile{cursor:pointer}
       </div>
       <div id="thumbs" class="flex gap-2 flex-wrap mt-3"></div>
       <div id="pmodes"></div>
-      <div id="prog" class="hide mt-3 text-sm" style="color:var(--ac)"></div>
+      <div id="prog" class="hide mt-3 text-sm" style="color:var(--ac)" role="status" aria-live="polite"></div>
     </div>
 
     <div id="matbox" class="card p-4 mt-4">
@@ -125,7 +130,7 @@ button.tile{cursor:pointer}
       <input id="mfiles" type="file" accept="image/*" multiple class="hide">
       <button id="mup" type="button" class="btn2 w-full mt-3">Ler print de material</button>
       <div id="mthumbs" class="flex gap-2 flex-wrap mt-3"></div>
-      <div id="mprog" class="hide mt-3 text-sm" style="color:var(--ac)"></div>
+      <div id="mprog" class="hide mt-3 text-sm" style="color:var(--ac)" role="status" aria-live="polite"></div>
       <label for="mat">Material (um por linha, com a quantidade)</label>
       <textarea id="mat" rows="4" class="inp" placeholder="Ex.: Cabo UTP Cat6 — 25 m"></textarea>
       <details class="mt-2"><summary class="text-xs cursor-pointer" style="color:var(--mu)">Texto lido pelo OCR (para diagnóstico)</summary><pre id="mtxt" class="text-xs whitespace-pre-wrap mt-1" style="color:var(--mu)"></pre></details>
@@ -312,6 +317,39 @@ function loadCfg(){const c=store.get('mt_cfg',DEF);$('c_nome').value=c.nome;$('c
 $('save').onclick=()=>{store.set('mt_cfg',{nome:$('c_nome').value,pais:$('c_pais').value,emp:$('c_emp').value,empr:$('c_empr').value,mail:$('c_mail').value,tok:(store.get('mt_cfg',DEF).tok||''),chat:$('c_chat').value});toast('Perfil guardado')};
 loadCfg();
 
+// Progresso da IA/OCR: mensagem + percentagem
+const _tc=Object.getOwnPropertyDescriptor(Node.prototype,'textContent');
+['prog','mprog'].forEach(id=>{const e=$(id);Object.defineProperty(e,'textContent',{configurable:true,get(){return _tc.get.call(this)},set(v){_tc.set.call(this,v);this.classList.remove('pb','pi')}})});
+const AIMSG='A IA está a processar os seus dados';
+function progShow(id,pct,extra){
+  const e=$(id);e.classList.remove('hide');e.textContent=AIMSG+(pct==null?'…':'… '+pct+'%')+(extra?' '+extra:'');
+  if(pct==null)e.classList.add('pi');else{e.classList.add('pb');e.style.setProperty('--p',pct+'%')}
+}
+// Comentários/observações lidos dos prints → notas
+function parseComments(t){
+  const rows=String(t||'').split(/\r?\n/).map(r=>r.replace(/\s+/g,' ').trim());
+  const LBL=/^(?:coment[áa]rios?(?:\s+(?:do|da)\s+\w+)?|observa[çc][õo]es|observa[çc][ãa]o|obs\.?|notas?(?:\s+(?:do|da)\s+\w+)?|descri[çc][ãa]o\s+do\s+problema|motivo)\s*(?:[:\-–]\s*|$)(.*)$/i;
+  const NEXT=/^[A-ZÀ-Ú][\wÀ-ú ./]{1,28}\s*:\s*\S/;
+  const out=[],seen=new Set();
+  for(let i=0;i<rows.length;i++){
+    const m=rows[i].match(LBL);if(!m)continue;
+    const parts=[];if(m[1]&&m[1].trim())parts.push(m[1].trim());
+    for(let j=i+1;j<rows.length&&parts.length<5;j++){
+      const r=rows[j];if(!r||NEXT.test(r)||LBL.test(r)||r.length>240)break;
+      if(/^(?:guardar|cancelar|confirmar|voltar|fechar)$/i.test(r))break;
+      parts.push(r);i=j;
+    }
+    const txt=parts.join(' ').replace(/^[\s\-–:]+/,'').trim();
+    if(txt.length>=3&&/[A-Za-zÀ-ú]{3}/.test(txt)&&!seen.has(txt.toLowerCase())){seen.add(txt.toLowerCase());out.push(txt)}
+  }
+  return out;
+}
+function addNota(v){
+  const add=(Array.isArray(v)?v:String(v||'').split('\n')).map(x=>String(x).trim()).filter(Boolean);if(!add.length)return;
+  const cur=$('nota').value.split('\n').map(x=>x.trim()).filter(Boolean),have=new Set(cur.map(x=>x.toLowerCase()));
+  $('nota').value=cur.concat(add.filter(x=>!have.has(x.toLowerCase()))).join('\n');report();
+}
+
 // Tarefa
 let texts=[];
 $('abrir').onclick=()=>{$('work').classList.remove('hide');$('abrir').textContent='Tarefa aberta'};
@@ -324,26 +362,26 @@ $('files').onchange=async e=>{
   if(window.claude){showForm();report();return}
   try{
     for(let i=0;i<fs.length;i++){
-      $('prog').textContent=`OCR ${i+1}/${fs.length}...`;
-      const r=await Promise.race([Tesseract.recognize(fs[i],'por+eng',{logger:m=>{$('prog').textContent=`OCR ${i+1}/${fs.length}: ${m.status} ${Math.round((m.progress||0)*100)}%`}}),new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),45000))]);
+      progShow('prog',Math.round(i/fs.length*100),`(print ${i+1} de ${fs.length})`);
+      const r=await Promise.race([Tesseract.recognize(fs[i],'por+eng',{logger:m=>{if(m.status==='recognizing text')progShow('prog',Math.min(99,Math.round((i+(m.progress||0))/fs.length*100)),`(print ${i+1} de ${fs.length})`)}}),new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),45000))]);
       texts.push(r.data.text);
     }
-    pmode=texts.map(()=>'auto');$('ocrtxt').textContent=texts.join('\n---\n');fill(parseAll());drawModes();
+    pmode=texts.map(()=>'auto');$('ocrtxt').textContent=texts.join('\n---\n');progShow('prog',100);fill(parseAll());addNota(parseComments(texts.join('\n')));drawModes();
   $('prog').classList.add('hide');}catch(err){$('prog').textContent='O OCR não consegue carregar aqui (ficheiros de idioma bloqueados). Descarregue o ficheiro HTML e abra-o no telemóvel/PC, ou preencha os campos abaixo manualmente.';showForm();report()}
 };
 const shrink=f=>new Promise((ok,no)=>{const i=new Image();i.onload=()=>{const k=Math.min(1,1600/Math.max(i.width,i.height)),c=document.createElement('canvas');c.width=i.width*k;c.height=i.height*k;c.getContext('2d').drawImage(i,0,0,c.width,c.height);c.toBlob(b=>b?ok(b):no(new Error('img')),'image/jpeg',.85)};i.onerror=()=>no(new Error('img'));i.src=URL.createObjectURL(f)});
 async function aiApi(fs){
   try{
-    $('prog').textContent='A ler os prints com IA (pode demorar)...';
+    progShow('prog',null,'(pode demorar)');
     const b64=await Promise.all(fs.slice(0,4).map(async f=>{const b=await shrink(f);return new Promise(r=>{const fr=new FileReader();fr.onload=()=>r(fr.result.split(',')[1]);fr.readAsDataURL(b)})}));
     const content=b64.map(d=>({type:'image',source:{type:'base64',media_type:'image/jpeg',data:d}}));
-    content.push({type:'text',text:'Estas imagens sao prints de uma Ordem de Trabalho (WO) de telecomunicacoes em portugues. Equipamentos da aba Entrega, Instalacao ou Ativacao vao em inst; os da aba Recolha vao em rec. Responde APENAS com um objeto JSON: {"wo":"","conta":"conta de servico","cli":"nome do cliente","tel":"contacto","mor":"morada completa","inst":["equipamento instalado + SN"],"rec":["equipamento recolhido + SN"]}. Usa "" ou [] se nao encontrares. Nao inventes; copia os SN exatamente.'});
+    content.push({type:'text',text:'Estas imagens sao prints de uma Ordem de Trabalho (WO) de telecomunicacoes em portugues. Equipamentos da aba Entrega, Instalacao ou Ativacao vao em inst; os da aba Recolha vao em rec. Responde APENAS com um objeto JSON: {"wo":"","conta":"conta de servico","cli":"nome do cliente","tel":"contacto","mor":"morada completa","inst":["equipamento instalado + SN"],"rec":["equipamento recolhido + SN"],"notas":["cada comentario, observacao ou nota escrito na ordem de trabalho"]}. Usa "" ou [] se nao encontrares. Nao inventes; copia os SN exatamente.'});
     const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1000,messages:[{role:'user',content}]})});
     const j=await r.json();
     const t=(j.content||[]).map(i=>i.text||'').join('');
     const d=JSON.parse(t.slice(t.indexOf('{'),t.lastIndexOf('}')+1));
     const J=v=>Array.isArray(v)?v.join('\n'):(v||'');
-    fill({wo:d.wo,conta:d.conta,cli:d.cli,tel:d.tel,mor:d.mor,inst:J(d.inst),rec:J(d.rec)});
+    fill({wo:d.wo,conta:d.conta,cli:d.cli,tel:d.tel,mor:d.mor,inst:J(d.inst),rec:J(d.rec)});addNota(Array.isArray(d.notas)?d.notas:J(d.notas));
     $('prog').classList.add('hide');return true;
   }catch(e){$('prog').textContent='Leitura por IA falhou ('+((e&&e.message)||'erro')+'). Preencha manualmente.';return false}
 }
@@ -352,11 +390,11 @@ async function aiRead(fs){
     if(!window.claude||typeof claude.use!=='function')return await aiApi(fs);
     const s=await claude.use('sample');if(!s){$('prog').textContent='A leitura por IA nao foi autorizada ou nao esta disponivel. Preencha manualmente ou volte a carregar os prints e aceite o pedido.';return false}
     const lim=await s.limits();if(!lim||!lim.images){$('prog').textContent='Esta vista nao permite enviar imagens ao Claude. Abra a pagina publicada diretamente em claude.ai ou preencha manualmente.';return false}
-    $('prog').textContent='A ler os prints com IA (pode demorar até 1 min)...';
+    progShow('prog',null,'(pode demorar até 1 min)');
     const blobs=fs.slice(0,lim.images.maxCount||4);
-    const d=await s.json('Estas imagens são prints/fotos de uma Ordem de Trabalho (WO) de telecomunicações em português. Equipamentos da aba Entrega, Instalação ou Ativação vão em inst; os da aba Recolha vão em rec. Extrai os dados e responde APENAS com um objeto JSON: {"wo":"identificação da WO","conta":"conta de serviço","cli":"nome do cliente","tel":"contacto","mor":"morada completa","inst":["equipamento instalado + SN"],"rec":["equipamento recolhido + SN"]}. Usa "" ou [] quando não encontrares. Não inventes valores; copia números de série exatamente.',{images:blobs,modelTier:'default'});
+    const d=await s.json('Estas imagens são prints/fotos de uma Ordem de Trabalho (WO) de telecomunicações em português. Equipamentos da aba Entrega, Instalação ou Ativação vão em inst; os da aba Recolha vão em rec. Extrai os dados e responde APENAS com um objeto JSON: {"wo":"identificação da WO","conta":"conta de serviço","cli":"nome do cliente","tel":"contacto","mor":"morada completa","inst":["equipamento instalado + SN"],"rec":["equipamento recolhido + SN"],"notas":["cada comentário, observação ou nota escrito na ordem de trabalho"]}. Usa "" ou [] quando não encontrares. Não inventes valores; copia números de série exatamente.',{images:blobs,modelTier:'default'});
     const j=v=>Array.isArray(v)?v.join('\n'):(v||'');
-    fill({wo:d.wo,conta:d.conta,cli:d.cli,tel:d.tel,mor:d.mor,inst:j(d.inst),rec:j(d.rec)});
+    fill({wo:d.wo,conta:d.conta,cli:d.cli,tel:d.tel,mor:d.mor,inst:j(d.inst),rec:j(d.rec)});addNota(Array.isArray(d.notas)?d.notas:j(d.notas));
     $('prog').classList.add('hide');return true;
   }catch(e){$('prog').textContent='Leitura por IA indisponível ('+((e&&e.code)||'erro')+': '+((e&&e.message)||'')+'). A tentar OCR...';return false}
 }
@@ -399,7 +437,7 @@ function parse(t){
     lines.forEach((l,i)=>{const m=l.match(/N[º°o]?\s*S[^\s]{2,4}\s*:?\s*([A-Z0-9]{8,})/i);if(m){let nm='';for(let j=i-1;j>=Math.max(0,i-3);j--){if(/router|ont|box|extender|kaon|plume|decoder/i.test(lines[j])){nm=(lines[j].match(/router[\d. ]*ftth|nos ?box ?v?\d|extender[ -]*wi-?fi[ -]*plume|ont/i)||[lines[j]])[0];break}}inst.push((nm?nm+' ':'')+'SN: '+m[1])}});
   }
   let mor='';const mi=lines.findIndex(l=>/^Morada/i.test(l));
-  if(mi>=0){const p=[lines[mi].replace(/^Morada\s*:?\s*/i,'')];for(let k=mi+1;k<lines.length&&k<mi+5;k++){if(/abrir mapa|^tipo\b|fechar|estado|^(nome|cliente|contacto)/i.test(lines[k]))break;p.push(lines[k])}mor=p.join(' ').replace(/(\s*-\s*){2,}/g,' - ').replace(/\s+/g,' ').trim()}
+  if(mi>=0){const p=[lines[mi].replace(/^Morada\s*:?\s*/i,'')];for(let k=mi+1;k<lines.length&&k<mi+5;k++){if(/abrir mapa|^tipo\b|fechar|estado|^(nome|cliente|contacto)|^(coment|observa|obs\b|notas?\b|instalad|recolhid|equipament)/i.test(lines[k]))break;p.push(lines[k])}mor=p.join(' ').replace(/(\s*-\s*){2,}/g,' - ').replace(/\s+/g,' ').trim()}
   {const sn=new Set();inst=inst.filter(x=>{const k=(x.match(/SN:\s*(\S+)/)||[x])[1];if(sn.has(k))return false;sn.add(k);return true})}
   return{wo:(woList(t)[0]||''),woAlt:woList(t).slice(1),
     conta:g(/Conta[^:\n]*:\s*([\d.\-]+)/i)||g(/acesso\s+(\d{6,})/i),
@@ -989,12 +1027,12 @@ $('mup').onclick=()=>$('mfiles').click();
 $('mfiles').onchange=async e=>{
   const fs=[...e.target.files];e.target.value='';if(!fs.length)return;
   $('mthumbs').innerHTML='';fs.forEach(f=>{const i=new Image();i.src=URL.createObjectURL(f);i.alt='Print de material';i.className='h-16 rounded border';i.style.borderColor='var(--ln)';$('mthumbs').appendChild(i)});
-  $('mprog').classList.remove('hide');
+  progShow('mprog',0);
   try{
     const out=[];
     for(let i=0;i<fs.length;i++){
-      $('mprog').textContent=`OCR ${i+1}/${fs.length}...`;
-      const r=await Promise.race([Tesseract.recognize(fs[i],'por+eng',{logger:m=>{$('mprog').textContent=`OCR ${i+1}/${fs.length}: ${m.status} ${Math.round((m.progress||0)*100)}%`}}),new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),45000))]);
+      progShow('mprog',Math.round(i/fs.length*100),`(print ${i+1} de ${fs.length})`);
+      const r=await Promise.race([Tesseract.recognize(fs[i],'por+eng',{logger:m=>{if(m.status==='recognizing text')progShow('mprog',Math.min(99,Math.round((i+(m.progress||0))/fs.length*100)),`(print ${i+1} de ${fs.length})`)}}),new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),45000))]);
       out.push(r.data.text);
     }
     $('mtxt').textContent=out.join('\n---\n');
