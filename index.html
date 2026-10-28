@@ -726,6 +726,7 @@ function parseMaterial(t){
   const rxLead=new RegExp('^'+NUM+'\\s*[x×]\\s+(.+)$','i');
   const rxTrailX=new RegExp('^(.+?)\\s+[x×]\\s*'+NUM+'$','i');
   const rxTrailU=new RegExp('^(.+?)\\s+'+NUM+'\\s*('+MAT_UNIT+')\\.?$','i');
+  const rxParen=new RegExp('^(.+?)\\s*[\\(\\[]\\s*([A-Za-zçÇ.]{1,8})\\s*[\\)\\]]\\s*[:\\-–=]?\\s*'+NUM+'$','i'),rxParenOnly=/^(.+?)\s*[\(\[]\s*([A-Za-zçÇ.]{1,8})\s*[\)\]]$/;
   const rxNum=new RegExp('^'+NUM+'\\s*('+MAT_UNIT+')?$','i'),rxUnit=new RegExp('^'+MAT_UNIT+'$','i');
   const add=(d,q)=>{
     d=String(d).replace(/\s+/g,' ').replace(/^\d+[.)]\s+(?=\D)/,'').replace(/[\s:;,.\-–—(]+$/,'').trim();
@@ -737,7 +738,7 @@ function parseMaterial(t){
     if(line.length<2||line.length>140||MAT_HEAD.test(line))continue;
     if(/\b(?:s\/?n|n[ºo°]?\s*s[ée]rie)\s*[:.]/i.test(line)||/\d{1,2}[\/.:]\d{1,2}[\/.:]\d{2,4}/.test(line)||/\b[239]\d{2}\s?\d{3}\s?\d{3}\b/.test(line))continue;
     if(rxQtyOnly.test(line))continue;
-    let m,d='',q='';
+    let m,mm,d='',q='';
     const cols=raw.trim().split(/\s{2,}/);
     if(cols.length>=2){
       let u='';const c=cols.slice();
@@ -745,6 +746,8 @@ function parseMaterial(t){
       const mm=c[c.length-1].match(rxNum);
       if(c.length>=2&&mm){d=c.slice(0,-1).join(' ');q=qtyFmt(mm[1],u||mm[2])}
     }
+    if(!q&&(m=line.match(rxParen))){d=m[1];q=qtyFmt(m[3],m[2])}
+    if(!q&&(m=line.match(rxParenOnly))&&rows[i+1]&&(mm=rows[i+1].replace(/\s+/g,' ').trim().match(rxNum))&&!mm[2]){d=m[1];q=qtyFmt(mm[1],m[2]);i++}
     if(!q&&(m=line.match(rxLabel))){d=m[1];q=qtyFmt(m[2],m[3])}
     if(!q&&(m=line.match(rxLead))){d=m[2];q=qtyFmt(m[1])}
     if(!q&&(m=line.match(rxTrailX))){d=m[1];q=qtyFmt(m[2])}
