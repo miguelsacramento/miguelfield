@@ -224,6 +224,7 @@ button.tile{cursor:pointer}
     <select id="c_login" class="inp"><option value="0">Desligado (modo de teste)</option><option value="1">Ligado</option></select>
     <button id="c_out" class="btn2 w-full mt-3">Terminar sessão</button>
     <button id="c_onb" class="btn2 w-full mt-3">Rever introdução</button>
+    <button id="c_tut" class="btn2 w-full mt-2">Ver tutorial de utilização</button>
     <label>Aspeto</label>
     <select id="c_tema" class="inp"><option value="dark">Escuro</option><option value="light">Claro (para ver ao sol)</option></select>
     <button id="save" class="btn w-full mt-4">Guardar perfil</button>
@@ -253,7 +254,7 @@ button.tile{cursor:pointer}
 </section>
 </main>
 
-<footer class="text-center text-xs py-2" style="color:var(--mu);margin-bottom:84px">Criado e assinado por Miguel Sacramento · versão 29.10-b</footer>
+<footer class="text-center text-xs py-2" style="color:var(--mu);margin-bottom:84px">Criado e assinado por Miguel Sacramento · versão 29.10-c</footer>
 
 <nav aria-label="Principal" class="fixed bottom-0 inset-x-0 flex gap-1 border-t px-2" style="background:var(--sf);border-color:var(--ln);padding-bottom:calc(10px + env(safe-area-inset-bottom,0px))">
   <button class="tab on" data-v="home" aria-label="Início"><span class="ti"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>Início</button>
@@ -275,7 +276,7 @@ button.tile{cursor:pointer}
    <div id="ob2" class="hide"><h2 class="text-2xl font-bold">O seu perfil</h2><p class="text-sm mt-1" style="color:var(--mu)">Aparece no fim de cada relatório.</p>
      <label>Nome</label><input id="ob_nome" class="inp"><label>País / Zona</label><input id="ob_pais" class="inp"><label>Empresa</label><input id="ob_emp" class="inp"><label>Empreiteira</label><input id="ob_empr" class="inp"><label>Email de destino do relatório</label><input id="ob_mail" type="email" class="inp"></div>
    <div id="ob3" class="hide"><h2 class="text-2xl font-bold">Valor de cada tarefa</h2><p class="text-sm mt-1" style="color:var(--mu)">Serve para o calendário somar o dia. Pode deixar em branco e preencher depois no Perfil.</p><div id="ob_rates"></div></div>
-   <div id="ob4" class="hide text-center"><h2 class="text-2xl font-bold">Tudo pronto</h2><p class="text-sm mt-2" style="color:var(--mu)">Escolha o tipo de intervenção, abra uma nova tarefa e carregue os prints da WO. Confira os campos e envie o relatório.</p></div>
+   <div id="ob4" class="hide"><div id="ob_t"></div><div id="ob_dots" class="flex justify-center gap-2 mt-4" aria-hidden="true"></div></div>
   </div>
   <div class="flex gap-2 mt-3"><button id="ob_back" class="btn2 flex-1 hide">Voltar</button><button id="ob_next" class="btn flex-1">Seguinte</button></div>
  </div>
@@ -298,6 +299,12 @@ button.tile{cursor:pointer}
 <script>
 const $=id=>document.getElementById(id);
 const store={get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){toast('Não foi possível guardar neste navegador')}}};
+const TUT=[
+ {i:'plus',t:'Abrir uma tarefa',d:'No Início, toque em Nova tarefa. Escolha o tipo de intervenção (Instalação, Manutenção, Incumprimento, etc.) e toque em Abrir Nova Tarefa.'},
+ {i:'camera',t:'Ler os prints da WO',d:'Toque em Prints / fotos e escolha os prints da ordem de trabalho. A app mostra “A IA está a processar os seus dados” com a percentagem e preenche WO, cliente, morada e equipamentos. Os comentários dos prints vão para as Notas. Confira sempre os campos.'},
+ {i:'clip',t:'Material utilizado',d:'Em Material utilizado, toque em Ler print de material para a app ler os artigos e as quantidades. Pode corrigir o texto ou escrever à mão. O material entra no relatório.'},
+ {i:'send',t:'Enviar e guardar',d:'Confira o relatório, copie ou envie e toque em Enviar. A tarefa fica no Histórico e, com conta, o texto (cliente, morada, material e notas) é guardado na nuvem. As fotos e os prints nunca são guardados.'},
+ {i:'chart',t:'Acompanhar o dia',d:'O Início mostra o total do dia e as tarefas por tipo. O Histórico agrupa por dia e o calendário soma o mês. Na Comunidade vê notícias, avisos no mapa e o fórum. Defina os valores das tarefas no Perfil.'}];
 const DEF={nome:'Miguel Sacramento',emp:'Migueltech Telecom',mail:'',tok:'',chat:''};
 const toast=m=>{const t=$('toast');t.textContent=m;t.classList.remove('hide');setTimeout(()=>t.classList.add('hide'),2400)};
 
@@ -670,6 +677,10 @@ const IC={
  cloud:'<path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/>',
  phone:'<rect x="5" y="2" width="14" height="20" rx="3"/><line x1="12" y1="18" x2="12.01" y2="18"/>',
  alert:'<path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>',
+ plus:'<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>',
+ camera:'<path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/>',
+ send:'<line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>',
+ chart:'<line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>',
  chat:'<path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>'};
 const svgI=(k,z)=>`<svg width="${z||22}" height="${z||22}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${IC[k]}</svg>`;
 const taskIcon=t=>svgI(/incumpr/i.test(t)?'ban':/instala/i.test(t)?'box':/manuten|suporte/i.test(t)?'tool':/morada|desloca/i.test(t)?'pin':/altera/i.test(t)?'sliders':'clip');
@@ -809,9 +820,19 @@ $('calcbtn').onclick=()=>{const open=$('calcbox').classList.toggle('hide')===fal
 var obS=1;
 function maybeOnb(){if(store.get('mt_onb',false)||!$('login').classList.contains('hide'))return;obShow(1)}
 function obOps(){document.querySelectorAll('.obop').forEach(b=>{b.className='obop '+(b.dataset.o===store.get('mt_op','nos')?'btn':'btn2')+' w-full mt-2'})}
-function obShow(n){
-  obS=n;$('onb').classList.remove('hide');[1,2,3,4].forEach(i=>$('ob'+i).classList.toggle('hide',i!==n));
-  $('ob_step').textContent=n<4?'Passo '+n+' de 3':'';$('ob_back').classList.toggle('hide',n===1||n===4);$('ob_next').textContent=n===3?'Concluir':n===4?'Começar':'Seguinte';
+var obT=false;
+function obTut(n){
+  const k=n-4,x=TUT[k];
+  $('ob_t').innerHTML=`<div class="flex justify-center" style="color:var(--ac)"><span class="ico" style="width:64px;height:64px;border-radius:18px">${svgI(x.i,32)}</span></div><h2 class="text-2xl font-bold text-center mt-3">${k+1}. ${esc(x.t)}</h2><p class="text-sm mt-2" style="color:var(--mu);line-height:1.5">${esc(x.d)}</p>`;
+  $('ob_dots').innerHTML=TUT.map((_,i)=>`<span style="width:${i===k?22:8}px;height:8px;border-radius:999px;background:${i===k?'var(--ac)':'var(--ln)'}"></span>`).join('');
+}
+function obShow(n,only){
+  if(only!==undefined)obT=!!only;else if(n<4)obT=false;
+  obS=n;$('onb').classList.remove('hide');[1,2,3,4].forEach(i=>$('ob'+i).classList.toggle('hide',i!==Math.min(n,4)));
+  const last=4+TUT.length-1;
+  $('ob_step').textContent=n<4?'Passo '+n+' de 3':'Como usar · '+(n-3)+' de '+TUT.length;
+  $('ob_back').classList.toggle('hide',n===1||(obT&&n===4));$('ob_next').textContent=n===3?'Seguinte':n===last?'Começar':'Seguinte';
+  if(n>=4)obTut(n);
   if(n===1)obOps();
   if(n===2){const c=store.get('mt_cfg',DEF);$('ob_nome').value=c.nome||'';$('ob_pais').value=c.pais||'';$('ob_emp').value=c.emp||'';$('ob_empr').value=c.empr||'';$('ob_mail').value=c.mail||''}
   if(n===3){const r=getRates();$('ob_rates').innerHTML=tiposOp().map((t,i)=>`<label>${esc(t)} (€)</label><input class="inp" id="ob_r_${i}" type="number" step="0.01" min="0" value="${r[t]??''}">`).join('')}
@@ -823,10 +844,11 @@ $('ob_back').onclick=()=>obShow(obS-1);
 $('ob_next').onclick=()=>{
   if(obS===2){const c=store.get('mt_cfg',DEF);Object.assign(c,{nome:$('ob_nome').value.trim()||c.nome,pais:$('ob_pais').value.trim(),emp:$('ob_emp').value.trim(),empr:$('ob_empr').value.trim(),mail:$('ob_mail').value.trim()});store.set('mt_cfg',c);loadCfg()}
   if(obS===3){const r={};tiposOp().forEach((t,i)=>{const v=parseFloat($('ob_r_'+i).value);if(v>0)r[t]=v});store.set('mt_rates_'+store.get('mt_op','nos'),r);renderRates()}
-  if(obS===4){obEnd();return}
+  if(obS===4+TUT.length-1){obEnd();go('home');return}
   obShow(obS+1);
 };
-$('c_onb').onclick=()=>{go('home');obShow(1)};
+$('c_onb').onclick=()=>{go('home');obShow(1,false)};
+$('c_tut').onclick=()=>{go('home');obShow(4,true)};
 maybeOnb();
 function contaLbl(){return store.get('mt_op','nos')==='vodafone'?'Acesso':'Conta de serviço'}
 
