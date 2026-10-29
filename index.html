@@ -4,6 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>DeltaField · Telecomunicações</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="theme-color" content="#0a1530">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="DeltaField">
 <script src="https://cdn.tailwindcss.com/3.4.17"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/5.1.1/tesseract.min.js"></script>
@@ -224,6 +231,8 @@ button.tile{cursor:pointer}
     <select id="c_login" class="inp"><option value="0">Desligado (modo de teste)</option><option value="1">Ligado</option></select>
     <button id="c_out" class="btn2 w-full mt-3">Terminar sessão</button>
     <button id="c_onb" class="btn2 w-full mt-3">Rever introdução</button>
+    <h3 class="hd text-lg font-bold mt-4">Ícone no ecrã inicial</h3>
+    <div id="inst_cfg" class="mt-2"></div>
     <label>Aspeto</label>
     <select id="c_tema" class="inp"><option value="dark">Escuro</option><option value="light">Claro (para ver ao sol)</option></select>
     <button id="save" class="btn w-full mt-4">Guardar perfil</button>
@@ -253,7 +262,7 @@ button.tile{cursor:pointer}
 </section>
 </main>
 
-<footer class="text-center text-xs py-2" style="color:var(--mu);margin-bottom:84px">Criado e assinado por Miguel Sacramento · versão 29.10-d</footer>
+<footer class="text-center text-xs py-2" style="color:var(--mu);margin-bottom:84px">Criado e assinado por Miguel Sacramento · versão 29.10-e</footer>
 
 <nav aria-label="Principal" class="fixed bottom-0 inset-x-0 flex gap-1 border-t px-2" style="background:var(--sf);border-color:var(--ln);padding-bottom:calc(10px + env(safe-area-inset-bottom,0px))">
   <button class="tab on" data-v="home" aria-label="Início"><span class="ti"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>Início</button>
@@ -275,7 +284,8 @@ button.tile{cursor:pointer}
    <div id="ob2" class="hide"><h2 class="text-2xl font-bold">O seu perfil</h2><p class="text-sm mt-1" style="color:var(--mu)">Aparece no fim de cada relatório.</p>
      <label>Nome</label><input id="ob_nome" class="inp"><label>País / Zona</label><input id="ob_pais" class="inp"><label>Empresa</label><input id="ob_emp" class="inp"><label>Empreiteira</label><input id="ob_empr" class="inp"><label>Email de destino do relatório</label><input id="ob_mail" type="email" class="inp"></div>
    <div id="ob3" class="hide"><h2 class="text-2xl font-bold">Valor de cada tarefa</h2><p class="text-sm mt-1" style="color:var(--mu)">Serve para o calendário somar o dia. Pode deixar em branco e preencher depois no Perfil.</p><div id="ob_rates"></div></div>
-   <div id="ob4" class="hide text-center"><h2 class="text-2xl font-bold">Tudo pronto</h2><p class="text-sm mt-2" style="color:var(--mu)">Escolha o tipo de intervenção, abra uma nova tarefa e carregue os prints da WO. Confira os campos e envie o relatório.</p></div>
+   <div id="ob4" class="hide"><h2 class="text-2xl font-bold">Ter a app à mão</h2><p class="text-sm mt-1" style="color:var(--mu)">Quer o ícone do DeltaField no ecrã inicial do telemóvel e nos favoritos, para abrir a app com um toque?</p><div id="inst_ob" class="mt-3"></div></div>
+   <div id="ob5" class="hide text-center"><h2 class="text-2xl font-bold">Tudo pronto</h2><p class="text-sm mt-2" style="color:var(--mu)">Escolha o tipo de intervenção, abra uma nova tarefa e carregue os prints da WO. Confira os campos e envie o relatório.</p></div>
   </div>
   <div class="flex gap-2 mt-3"><button id="ob_back" class="btn2 flex-1 hide">Voltar</button><button id="ob_next" class="btn flex-1">Seguinte</button></div>
  </div>
@@ -805,13 +815,37 @@ $('c_out').onclick=()=>{if(sbInit()){sb.auth.signOut().then(()=>{SBMODE=false;my
 startAuth();
 $('calcbtn').onclick=()=>{const open=$('calcbox').classList.toggle('hide')===false;$('calcbtn').setAttribute('aria-expanded',open);$('calcarrow').textContent=open?'▲ Retrair':'▼ Expandir'};
 
+// Instalar a app (ecrã inicial / favoritos)
+var instEv=null;
+const isStandalone=()=>{try{return matchMedia('(display-mode: standalone)').matches||navigator.standalone===true}catch(e){return false}};
+const isIOS=()=>/iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+function instHtml(){
+  if(isStandalone())return '<p class="text-sm" style="color:var(--ok)">A app já está instalada neste dispositivo.</p>';
+  let h='';
+  if(instEv)h+='<button type="button" class="btn w-full inst-go">Adicionar ao ecrã inicial</button>';
+  if(isIOS())h+='<p class="text-sm" style="color:var(--mu)">No iPhone ou iPad, abra esta página no Safari, toque em Partilhar (o quadrado com a seta) e escolha <b style="color:var(--tx)">Adicionar ao ecrã principal</b>.</p>';
+  else if(!instEv&&/android/i.test(navigator.userAgent))h+='<p class="text-sm" style="color:var(--mu)">Toque nos três pontos do navegador e escolha <b style="color:var(--tx)">Instalar app</b> ou <b style="color:var(--tx)">Adicionar ao ecrã inicial</b>.</p>';
+  else if(!instEv)h+='<p class="text-sm" style="color:var(--mu)">Para os favoritos, use <b style="color:var(--tx)">Ctrl+D</b> (⌘+D no Mac). Para instalar como app, use o ícone de instalar na barra de endereço do navegador.</p>';
+  return h;
+}
+function drawInst(){['inst_ob','inst_cfg'].forEach(id=>{const e=$(id);if(e)e.innerHTML=instHtml()})}
+document.addEventListener('click',async e=>{
+  if(!e.target.closest('.inst-go')||!instEv)return;
+  const ev=instEv;instEv=null;try{ev.prompt();const r=await ev.userChoice;toast(r&&r.outcome==='accepted'?'A instalar a app...':'Pode instalar mais tarde no Perfil')}catch(err){}drawInst();
+});
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();instEv=e;drawInst()});
+window.addEventListener('appinstalled',()=>{instEv=null;toast('App instalada');drawInst()});
+try{if('serviceWorker' in navigator&&/^https?:$/.test(location.protocol))navigator.serviceWorker.register('sw.js').catch(()=>{})}catch(e){}
+drawInst();
+
 // Onboarding
 var obS=1;
 function maybeOnb(){if(store.get('mt_onb',false)||!$('login').classList.contains('hide'))return;obShow(1)}
 function obOps(){document.querySelectorAll('.obop').forEach(b=>{b.className='obop '+(b.dataset.o===store.get('mt_op','nos')?'btn':'btn2')+' w-full mt-2'})}
 function obShow(n){
-  obS=n;$('onb').classList.remove('hide');[1,2,3,4].forEach(i=>$('ob'+i).classList.toggle('hide',i!==n));
-  $('ob_step').textContent=n<4?'Passo '+n+' de 3':'';$('ob_back').classList.toggle('hide',n===1||n===4);$('ob_next').textContent=n===3?'Concluir':n===4?'Começar':'Seguinte';
+  obS=n;$('onb').classList.remove('hide');[1,2,3,4,5].forEach(i=>$('ob'+i).classList.toggle('hide',i!==n));
+  $('ob_step').textContent=n<5?'Passo '+n+' de 4':'';$('ob_back').classList.toggle('hide',n===1||n===5);$('ob_next').textContent=n===4?'Agora não, seguinte':n===5?'Começar':'Seguinte';
+  if(n===4)drawInst();
   if(n===1)obOps();
   if(n===2){const c=store.get('mt_cfg',DEF);$('ob_nome').value=c.nome||'';$('ob_pais').value=c.pais||'';$('ob_emp').value=c.emp||'';$('ob_empr').value=c.empr||'';$('ob_mail').value=c.mail||''}
   if(n===3){const r=getRates();$('ob_rates').innerHTML=tiposOp().map((t,i)=>`<label>${esc(t)} (€)</label><input class="inp" id="ob_r_${i}" type="number" step="0.01" min="0" value="${r[t]??''}">`).join('')}
@@ -823,7 +857,7 @@ $('ob_back').onclick=()=>obShow(obS-1);
 $('ob_next').onclick=()=>{
   if(obS===2){const c=store.get('mt_cfg',DEF);Object.assign(c,{nome:$('ob_nome').value.trim()||c.nome,pais:$('ob_pais').value.trim(),emp:$('ob_emp').value.trim(),empr:$('ob_empr').value.trim(),mail:$('ob_mail').value.trim()});store.set('mt_cfg',c);loadCfg()}
   if(obS===3){const r={};tiposOp().forEach((t,i)=>{const v=parseFloat($('ob_r_'+i).value);if(v>0)r[t]=v});store.set('mt_rates_'+store.get('mt_op','nos'),r);renderRates()}
-  if(obS===4){obEnd();return}
+  if(obS===5){obEnd();return}
   obShow(obS+1);
 };
 $('c_onb').onclick=()=>{go('home');obShow(1)};
