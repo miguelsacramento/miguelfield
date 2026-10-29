@@ -278,7 +278,7 @@ button.tile{cursor:pointer}
 </section>
 </main>
 
-<footer class="text-center text-xs py-2" style="color:var(--mu);margin-bottom:84px">Criado e assinado por Miguel Sacramento · versão 29.10-g</footer>
+<footer class="text-center text-xs py-2" style="color:var(--mu);margin-bottom:84px">Criado e assinado por Miguel Sacramento · versão 29.10-h</footer>
 
 <nav aria-label="Principal" class="fixed bottom-0 inset-x-0 flex gap-1 border-t px-2" style="background:var(--sf);border-color:var(--ln);padding-bottom:calc(10px + env(safe-area-inset-bottom,0px))">
   <button class="tab on" data-v="home" aria-label="Início"><span class="ti"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>Início</button>
@@ -970,7 +970,7 @@ async function afterLogin(u){
         else if(x.relatorio&&(!e.txt||e.txt==='(sincronizada da conta)')){Object.assign(e,{cli:x.cliente||e.cli||'',mor:x.morada||e.mor||'',mat:x.material||e.mat||'',nota:x.notas||e.nota||'',txt:x.relatorio,cx:1})}});
       h.sort((a,b)=>b.id-a.id);_set('mt_hist',h)}
   }catch(e){}
-  syncTasks();schedPush();drawHome();initCom();
+  syncTasks();schedPush();drawHome();initCom();setTimeout(checkHash,400);
 }
 function schedPush(){if(!sb||!myId||!SBMODE)return;clearTimeout(pushT);pushT=setTimeout(pushProfile,800)}
 async function pushProfile(){
@@ -1080,7 +1080,11 @@ $('fb_go').onclick=async()=>{
   $('fb_x').value='';m('Obrigado! A sua opinião foi enviada.');toast('Opinião enviada');
   if(myRole==='admin')loadOpinioes();
 };
-$('h_fb').onclick=()=>{go('cfg');setTimeout(()=>$('fb').scrollIntoView({behavior:'smooth',block:'start'}),50)};
+function openFb(){go('cfg');setTimeout(()=>$('fb').scrollIntoView({behavior:'smooth',block:'start'}),80)}
+$('h_fb').onclick=openFb;
+// Ligação direta: <endereço da app>#opiniao abre o cartão "A sua opinião" depois de entrar
+function checkHash(){if(location.hash==='#opiniao'&&$('login').classList.contains('hide')&&$('onb').classList.contains('hide')){try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}openFb()}}
+window.addEventListener('hashchange',checkHash);
 function drawAdmin(){
   const q=($('adm_q').value||'').toLowerCase().trim();
   const r=admRows.filter(x=>!q||[x.nome,x.email,x.telefone].join(' ').toLowerCase().includes(q)).sort((a,b)=>(b.pendente?1:0)-(a.pendente?1:0));
