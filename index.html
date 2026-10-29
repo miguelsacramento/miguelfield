@@ -227,7 +227,7 @@ button.tile{cursor:pointer}
     <label>Aspeto</label>
     <select id="c_tema" class="inp"><option value="dark">Escuro</option><option value="light">Claro (para ver ao sol)</option></select>
     <button id="save" class="btn w-full mt-4">Guardar perfil</button>
-    <p class="text-xs mt-2" style="color:var(--mu)">Com a conta, as tarefas, os valores e o perfil ficam guardados na nuvem. Os relatórios, o material e as fotos ficam só neste dispositivo.</p>
+    <p class="text-xs mt-2" style="color:var(--mu)">Com a conta, as tarefas, os valores, o perfil e o texto do relatório (cliente, morada, material e notas) ficam guardados na nuvem. As fotos e os prints nunca são guardados.</p>
     <button id="calcbtn" class="btn2 w-full mt-4 flex items-center justify-between" aria-expanded="false" aria-controls="calcbox"><span>Calculadora do técnico</span><span id="calcarrow" aria-hidden="true">▼ Expandir</span></button>
     <div id="calcbox" class="hide mt-3">
       <p class="text-xs" style="color:var(--mu)">Valor de cada tarefa, para a operadora escolhida no topo. O calendário do Histórico soma por dia.</p>
@@ -253,7 +253,7 @@ button.tile{cursor:pointer}
 </section>
 </main>
 
-<footer class="text-center text-xs py-2" style="color:var(--mu);margin-bottom:84px">Criado e assinado por Miguel Sacramento · versão 28.10-d</footer>
+<footer class="text-center text-xs py-2" style="color:var(--mu);margin-bottom:84px">Criado e assinado por Miguel Sacramento · versão 29.10-a</footer>
 
 <nav aria-label="Principal" class="fixed bottom-0 inset-x-0 flex gap-1 border-t px-2" style="background:var(--sf);border-color:var(--ln);padding-bottom:calc(10px + env(safe-area-inset-bottom,0px))">
   <button class="tab on" data-v="home" aria-label="Início"><span class="ti"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>Início</button>
@@ -477,7 +477,7 @@ $('gen').onclick=report;
 
 function finish(){
   const h=store.get('mt_hist',[]);
-  h.unshift({id:Date.now(),valor:rate($('tipo').value),op:store.get('mt_op','nos'),tipo:$('tipo').value,wo:$('wo').value,cli:$('cli').value,mor:$('mor').value,mat:$('mat').value.trim(),txt:$('rel').value,data:new Date().toISOString()});
+  h.unshift({id:Date.now(),valor:rate($('tipo').value),op:store.get('mt_op','nos'),tipo:$('tipo').value,wo:$('wo').value,cli:$('cli').value,mor:$('mor').value,mat:$('mat').value.trim(),nota:$('nota').value.trim(),txt:$('rel').value,data:new Date().toISOString()});
   store.set('mt_hist',h);
   ['wo','conta','cli','tel','mor','inst','rec','mat','nota','rel'].forEach(k=>$(k).value='');
   $('thumbs').innerHTML='';$('mthumbs').innerHTML='';$('mtxt').textContent='';$('mprog').classList.add('hide');$('files').value='';texts=[];
@@ -914,7 +914,11 @@ async function afterLogin(u){
       if(p.operadora&&p.operadora!==store.get('mt_op','nos'))applyOp(p.operadora);else renderRates();
     }
     const{data:t}=await sb.from('tarefas').select('*').order('feita_em',{ascending:false}).limit(500);
-    if(t&&t.length){const h=store.get('mt_hist',[]),have=new Set(h.map(x=>x.cid).filter(Boolean));t.forEach(x=>{if(!have.has(x.id))h.push({id:Date.parse(x.feita_em),cid:x.id,tipo:x.tipo,wo:x.wo||'',cli:'',mor:'',valor:+x.valor,op:x.operadora,data:x.feita_em,txt:'(sincronizada da conta)'})});h.sort((a,b)=>b.id-a.id);_set('mt_hist',h)}
+    if(t&&t.length){const h=store.get('mt_hist',[]),byCid=new Map(h.filter(x=>x.cid).map(x=>[x.cid,x]));
+      t.forEach(x=>{const e=byCid.get(x.id);
+        if(!e)h.push({id:Date.parse(x.feita_em),cid:x.id,cx:x.relatorio?1:0,tipo:x.tipo,wo:x.wo||'',cli:x.cliente||'',mor:x.morada||'',mat:x.material||'',nota:x.notas||'',valor:+x.valor,op:x.operadora,data:x.feita_em,txt:x.relatorio||'(sincronizada da conta)'});
+        else if(x.relatorio&&(!e.txt||e.txt==='(sincronizada da conta)')){Object.assign(e,{cli:x.cliente||e.cli||'',mor:x.morada||e.mor||'',mat:x.material||e.mat||'',nota:x.notas||e.nota||'',txt:x.relatorio,cx:1})}});
+      h.sort((a,b)=>b.id-a.id);_set('mt_hist',h)}
   }catch(e){}
   syncTasks();schedPush();drawHome();initCom();
 }
@@ -930,14 +934,21 @@ async function syncTasks(){
   syncing=true;
   try{
     const pend=store.get('mt_hist',[]).filter(x=>!x.cid);
-    if(!pend.length)return;
+    const PH='(sincronizada da conta)',cut=(v,n)=>{v=String(v||'').trim();return v?v.slice(0,n):null};
+    const txtOf=x=>({cliente:cut(x.cli,300),morada:cut(x.mor,500),material:cut(x.mat,4000),notas:cut(x.nota,4000),relatorio:x.txt&&x.txt!==PH?cut(x.txt,12000):null});
+    const old=store.get('mt_hist',[]).filter(x=>x.cid&&!x.cx&&x.txt&&x.txt!==PH);
+    if(!pend.length&&!old.length)return;
     try{if(!localStorage.getItem('mt_backup_nuvem'))localStorage.setItem('mt_backup_nuvem',JSON.stringify({em:new Date().toISOString(),hist:store.get('mt_hist',[]),cfg:store.get('mt_cfg',DEF),op:store.get('mt_op','nos')}))}catch(e){}
     const done=new Map();let bad=0;
     for(const x of pend){
-      const{data,error}=await sb.from('tarefas').insert({operadora:x.op||store.get('mt_op','nos'),tipo:x.tipo,wo:x.wo||null,valor:val(x),feita_em:x.data}).select('id').single();
+      const{data,error}=await sb.from('tarefas').insert({operadora:x.op||store.get('mt_op','nos'),tipo:x.tipo,wo:x.wo||null,valor:val(x),feita_em:x.data,...txtOf(x)}).select('id').single();
       if(error){bad++;continue}done.set(x.id,data.id);
     }
-    if(done.size){const cur=store.get('mt_hist',[]);cur.forEach(x=>{if(!x.cid&&done.has(x.id))x.cid=done.get(x.id)});_set('mt_hist',cur);drawHome();if(!$('v-hist').classList.contains('hide'))renderHist()}
+    // tarefas já na nuvem sem texto: enviar o texto uma vez
+    const upd=new Set();
+    for(const x of old){const{error}=await sb.from('tarefas').update(txtOf(x)).eq('id',x.cid);if(!error)upd.add(x.id)}
+    if(upd.size){const cur=store.get('mt_hist',[]);cur.forEach(x=>{if(upd.has(x.id))x.cx=1});_set('mt_hist',cur)}
+    if(done.size){const cur=store.get('mt_hist',[]);cur.forEach(x=>{if(!x.cid&&done.has(x.id)){x.cid=done.get(x.id);x.cx=1}});_set('mt_hist',cur);drawHome();if(!$('v-hist').classList.contains('hide'))renderHist()}
     if(done.size&&!store.get('mt_migrado',false))toast(done.size+(done.size===1?' tarefa antiga guardada':' tarefas antigas guardadas')+' na sua conta');
     if(!bad)_set('mt_migrado',true);
   }finally{syncing=false}
