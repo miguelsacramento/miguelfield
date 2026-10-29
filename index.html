@@ -227,7 +227,7 @@ button.tile{cursor:pointer}
     <label>Aspeto</label>
     <select id="c_tema" class="inp"><option value="dark">Escuro</option><option value="light">Claro (para ver ao sol)</option></select>
     <button id="save" class="btn w-full mt-4">Guardar perfil</button>
-    <p class="text-xs mt-2" style="color:var(--mu)">Com a conta, as tarefas, os valores, o perfil e o texto do relatório (cliente, morada, material e notas) ficam guardados na nuvem. As fotos e os prints nunca são guardados.</p>
+    <p class="text-xs mt-2" style="color:var(--mu)">Privacidade: só você e o administrador veem os seus dados. Registe dados de clientes apenas quando forem necessários para o trabalho. Com a conta, as tarefas, os valores, o perfil e o texto do relatório (cliente, morada, material e notas) ficam guardados na nuvem. As fotos e os prints nunca são guardados.</p>
     <button id="calcbtn" class="btn2 w-full mt-4 flex items-center justify-between" aria-expanded="false" aria-controls="calcbox"><span>Calculadora do técnico</span><span id="calcarrow" aria-hidden="true">▼ Expandir</span></button>
     <div id="calcbox" class="hide mt-3">
       <p class="text-xs" style="color:var(--mu)">Valor de cada tarefa, para a operadora escolhida no topo. O calendário do Histórico soma por dia.</p>
@@ -253,7 +253,7 @@ button.tile{cursor:pointer}
 </section>
 </main>
 
-<footer class="text-center text-xs py-2" style="color:var(--mu);margin-bottom:84px">Criado e assinado por Miguel Sacramento · versão 29.10-a</footer>
+<footer class="text-center text-xs py-2" style="color:var(--mu);margin-bottom:84px">Criado e assinado por Miguel Sacramento · versão 29.10-b</footer>
 
 <nav aria-label="Principal" class="fixed bottom-0 inset-x-0 flex gap-1 border-t px-2" style="background:var(--sf);border-color:var(--ln);padding-bottom:calc(10px + env(safe-area-inset-bottom,0px))">
   <button class="tab on" data-v="home" aria-label="Início"><span class="ti"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>Início</button>
@@ -287,7 +287,7 @@ button.tile{cursor:pointer}
   <div class="flex gap-2 mb-3"><button class="btn flex-1 lseg" data-l="in">Entrar</button><button class="btn2 flex-1 lseg" data-l="new">Criar conta</button><button class="btn2 flex-1 lseg" data-l="rec">Recuperar</button></div>
   <div class="card p-4">
    <div id="l-in"><label>Email</label><input id="li_u" type="email" class="inp" autocomplete="email" inputmode="email"><label>Password</label><input id="li_p" type="password" class="inp" autocomplete="current-password"><button id="li_go" class="btn w-full mt-4">Entrar</button></div>
-   <div id="l-new" class="hide"><label>Nome</label><input id="ln_n" class="inp"><label>Email</label><input id="ln_e" type="email" class="inp"><label>Telefone</label><input id="ln_t" type="tel" class="inp" inputmode="tel" autocomplete="tel" placeholder="Ex.: 912345678"><label>Password (mínimo 8 caracteres)</label><input id="ln_p" type="password" class="inp" autocomplete="new-password"><label>Confirmar password</label><input id="ln_c" type="password" class="inp" autocomplete="new-password"><button id="ln_go" class="btn w-full mt-4">Criar conta</button></div>
+   <div id="l-new" class="hide"><label>Nome</label><input id="ln_n" class="inp"><label>Email</label><input id="ln_e" type="email" class="inp"><label>Telefone</label><input id="ln_t" type="tel" class="inp" inputmode="tel" autocomplete="tel" placeholder="Ex.: 912345678"><label>Password (mínimo 8 caracteres)</label><input id="ln_p" type="password" class="inp" autocomplete="new-password"><label>Confirmar password</label><input id="ln_c" type="password" class="inp" autocomplete="new-password"><details class="mt-3 text-xs" style="color:var(--mu)"><summary class="cursor-pointer font-bold" style="color:var(--tx)">Aviso de privacidade</summary><p class="mt-1">Guardamos o seu nome, email e telefone e, para cada tarefa, o tipo, a WO, o valor, a data e o texto do relatório (cliente, morada, material e notas). As fotos e os prints não são guardados: são lidos no seu telemóvel. Só você e o administrador da app veem os seus dados. Registe dados de clientes apenas quando forem necessários para o trabalho. Pode pedir ao administrador a correção ou a eliminação dos seus dados.</p></details><label class="flex items-start gap-2 mt-3 text-sm" style="text-transform:none;letter-spacing:0"><input id="ln_priv" type="checkbox" style="margin-top:.2rem;width:20px;height:20px;flex:none"><span>Li o aviso de privacidade e aceito o tratamento dos meus dados.</span></label><button id="ln_go" class="btn w-full mt-4">Criar conta</button></div>
    <div id="l-rec" class="hide"><label>Email da conta</label><input id="lr_e" type="email" class="inp"><button id="lr_send" class="btn2 w-full mt-3">Enviar código por email</button><label>Código recebido</label><input id="lr_c" class="inp" inputmode="numeric"><label>Nova password (mínimo 8 caracteres)</label><input id="lr_p" type="password" class="inp" autocomplete="new-password"><button id="lr_go" class="btn w-full mt-3">Redefinir password</button></div>
    <div id="lmsg" class="text-sm mt-3" style="color:var(--ac)"></div>
   </div>
@@ -771,7 +771,7 @@ async function hashPw(p,salt){try{const b=await crypto.subtle.digest('SHA-256',n
 const newSalt=()=>Array.from({length:16},()=>Math.floor(Math.random()*16).toString(16)).join('');
 function startAuthLocal(){const on=store.get('mt_login_on',false),ses=store.get('mt_session',null);$('c_login').value=on?'1':'0';$('login').classList.toggle('hide',!(on&&!(ses&&users().some(u=>u.email===ses))));maybeOnb()}
 document.querySelectorAll('.lseg').forEach(b=>b.onclick=()=>{document.querySelectorAll('.lseg').forEach(x=>{x.className=(x===b?'btn':'btn2')+' flex-1 lseg'});['in','new','rec'].forEach(k=>$('l-'+k).classList.toggle('hide',k!==b.dataset.l));lmsg('')});
-$('ln_go').onclick=async()=>{if(sbInit())return sbSignUp();
+$('ln_go').onclick=async()=>{if(!$('ln_priv').checked)return lmsg('Aceite o aviso de privacidade para criar a conta.');if(sbInit())return sbSignUp();
   const n=$('ln_n').value.trim(),e=norm($('ln_e').value),p=$('ln_p').value,us=users();
   if(n.length<2)return lmsg('Indique o nome.');
   if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e))return lmsg('Email inválido.');
