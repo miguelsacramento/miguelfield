@@ -276,7 +276,7 @@ button.tile{cursor:pointer}
 </section>
 </main>
 
-<footer class="text-center text-xs py-2" style="color:var(--mu);margin-bottom:84px">Criado e assinado por Miguel Sacramento · versão 29.10-j</footer>
+<footer class="text-center text-xs py-2" style="color:var(--mu);margin-bottom:84px">Criado e assinado por Miguel Sacramento · versão 29.10-k</footer>
 
 <nav aria-label="Principal" class="fixed bottom-0 inset-x-0 flex gap-1 border-t px-2" style="background:var(--sf);border-color:var(--ln);padding-bottom:calc(10px + env(safe-area-inset-bottom,0px))">
   <button class="tab on" data-v="home" aria-label="Início"><span class="ti"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>Início</button>
@@ -504,6 +504,12 @@ function drawModes(){
   el.querySelectorAll('.pm').forEach(x=>{x.value=pmode[+x.dataset.i]||'auto';x.onchange=()=>{pmode[+x.dataset.i]=x.value;const d=LeitorPrints.wo(texts,pmode);$('inst').value=d.inst;$('rec').value=d.rec;report()}});
 }
 function woList(t){const re=/\b(?:W[O0]|[O0]T|Ordem[^:\n]*)\s*[:#-]?\s*([A-Z]{0,3}-?\d[\w-]{4,})/gi,c={},o=[];let m;while((m=re.exec(t))){const v=m[1].toUpperCase();if(!(v in c)){c[v]=0;o.push(v)}c[v]++}o.sort((a,b)=>c[b]-c[a]);return o}
+// Limpa o nome de um equipamento: corta a partir da primeira palavra só em minúsculas (texto de avisos colado pelo OCR).
+function nomeEq(s){
+  const w=String(s).replace(/\s+[\]\[|}{i)(]{1,3}$/,'').trim().split(/\s+/),out=[];
+  for(const x of w){if(out.length&&/^[a-zà-ú]{3,}[.,]?$/.test(x))break;out.push(x)}
+  return out.join(' ').replace(/\s+(?:IN|I|\|)$/,'').trim();
+}
 function parse(t){
   const g=(re)=>{const m=t.match(re);return m?m[1].trim():''};
   const lines=t.split('\n').map(s=>s.trim()).filter(Boolean);
@@ -512,15 +518,15 @@ function parse(t){
   const nxt=re=>{const i=lines.findIndex(l=>re.test(l));return i>=0&&lines[i+1]?lines[i+1].replace(/^[^A-Za-z0-9À-ú]+/,'').trim():''};
   if(!inst.length&&!rec.length){
     inst=[];
-    const K=/^(tv\s*box|ont|router|extender|box|decoder|repetidor|mesh|set|super|nos)/i,ST=/^(instala|recolh|desinstal|status|ativa|equipamento na posse)/i,SNL=/\bs\/?n\s*:|\bN[.º°o\s]{0,4}S[^\s]{2,4}\s*:/i;
-    lines.forEach((l,i)=>{const m=l.match(/\bs\/?n\s*:?\s*([A-Z0-9]{6,})/i)||l.match(/\bN[.º°o\s]{0,4}S[^\s]{2,4}\s*:?\s*([A-Z0-9]{8,})/i);if(!m)return;let nm=[],R=false;for(let j=i-1;j>=Math.max(0,i-4);j--){const x=lines[j];if(SNL.test(x))break;if(/^(recolh|desinstal)/i.test(x))R=true;if(ST.test(x))continue;nm.unshift(x);if(K.test(x))break}const n=nm.length&&K.test(nm[0])?nm.join(' ').replace(/\s+[\]\[|}{i)(]{1,3}$/,'').trim():'';(R?rec:inst).push((n?n+' ':'')+'SN: '+m[1])});
+    const K=/^(?:cfs\s+)?(tv\s*box|ont|router|extender|box|decoder|repetidor|mesh|set|super|nos)/i,ST=/^(instala|recolh|desinstal|status|ativa|equipamento na posse)/i,SNL=/\bs\/?n\s*:|\bN[.º°o\s]{0,4}S[^\s]{2,4}\s*:/i;
+    lines.forEach((l,i)=>{const m=l.match(/\bs\/?n\s*:?\s*([A-Z0-9]{6,})/i)||l.match(/\bN[.º°o\s]{0,4}S[^\s]{2,4}\s*:?\s*([A-Z0-9]{8,})/i);if(!m)return;let nm=[],R=false;for(let j=i-1;j>=Math.max(0,i-4);j--){const x=lines[j];if(SNL.test(x))break;if(/^(recolh|desinstal)/i.test(x))R=true;if(ST.test(x))continue;nm.unshift(x);if(K.test(x))break}const n=nm.length&&K.test(nm[0])?nomeEq(nm.join(' ')):'';(R?rec:inst).push((n?n+' ':'')+'SN: '+m[1])});
     lines.forEach((l,i)=>{const m=l.match(/N[º°o]?\s*S[^\s]{2,4}\s*:?\s*([A-Z0-9]{8,})/i);if(m){let nm='';for(let j=i-1;j>=Math.max(0,i-3);j--){if(/router|ont|box|extender|kaon|plume|decoder/i.test(lines[j])){nm=(lines[j].match(/router[\d. ]*ftth|nos ?box ?v?\d|extender[ -]*wi-?fi[ -]*plume|ont/i)||[lines[j]])[0];break}}inst.push((nm?nm+' ':'')+'SN: '+m[1])}});
   }
   let mor='';const mi=lines.findIndex(l=>/^Morada/i.test(l));
   if(mi>=0){const p=[lines[mi].replace(/^Morada\s*:?\s*/i,'')];for(let k=mi+1;k<lines.length&&k<mi+5;k++){if(/abrir mapa|^tipo\b|fechar|estado|^(nome|cliente|contacto)|^(coment|observa|obs\b|notas?\b|instalad|recolhid|equipament)/i.test(lines[k]))break;p.push(lines[k])}mor=p.join(' ').replace(/(\s*-\s*){2,}/g,' - ').replace(/\s+/g,' ').trim()}
   {const sn=new Set();inst=inst.filter(x=>{const k=(x.match(/SN:\s*(\S+)/)||[x])[1];if(sn.has(k))return false;sn.add(k);return true})}
   return{wo:(woList(t)[0]||''),woAlt:woList(t).slice(1),
-    conta:g(/Conta[^:\n]*:\s*([\d.\-]+)/i)||g(/acesso\s+(\d{6,})/i),
+    conta:g(/Conta[^:\n]*:\s*([\d.\-]+)/i)||g(/acesso\s+(\d{6,})/i)||(v=>/^[\d.\-]{6,}$/.test(v)?v:'')(nxt(/^Conta(?:\s+de\s+servi[çc]o)?\s*$/i)),
     cli:(g(/^(?:Nome|Cliente)\s*:\s*(.+)/im)||g(/^(?:Nome|Cliente)[ \t]+(?!de\b)([A-ZÀ-Ú][\wÀ-ú ]{3,})\s*$/im)||nxt(/^Nome\s+de\s+\w+/i)).replace(/(\s+\S{1,2})+\s*$/,'').replace(/[.,;]+$/,'').trim(),
     tel:g(/(?:Telem[óo]vel|Contacto|Tel\w*)\s*:\s*([\d +]{9,})/i)||g(/\b([239]\d{2}\s?\d{3}\s?\d{3})\b/),
     mor:mor,inst:inst.join('\n'),rec:rec.join('\n')};
