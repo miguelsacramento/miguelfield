@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Migueltech Field App</title>
+<title>DeltaField · Telecomunicações</title>
 <script src="https://cdn.tailwindcss.com/3.4.17"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/5.1.1/tesseract.min.js"></script>
@@ -62,7 +62,7 @@ button.tile{cursor:pointer}
 </head>
 <body class="min-h-screen flex flex-col">
 <header class="px-4 pt-5 pb-2 flex items-center justify-between gap-3">
-  <div class="min-w-0"><div id="hi" class="text-sm" style="color:var(--mu)"></div><h1 class="text-3xl font-bold" style="color:var(--tx);line-height:1.1">Migueltech Field</h1></div>
+  <div class="min-w-0"><div id="hi" class="text-sm" style="color:var(--mu)"></div><h1 class="text-3xl font-bold" style="color:var(--tx);line-height:1.1">Delta<span style="color:var(--ac)">Field</span></h1><div class="text-xs" style="color:var(--mu);letter-spacing:.08em;text-transform:uppercase">Telecomunicações</div></div>
   <div class="pill"><span class="dot"></span><select id="op" aria-label="Operadora"><option value="nos">NOS</option><option value="vodafone">Vodafone</option><option value="meo">MEO</option></select></div>
 </header>
 
@@ -253,7 +253,7 @@ button.tile{cursor:pointer}
 </section>
 </main>
 
-<footer class="text-center text-xs py-2" style="color:var(--mu);margin-bottom:84px">Criado e assinado por Miguel Sacramento · versão 29.10-b</footer>
+<footer class="text-center text-xs py-2" style="color:var(--mu);margin-bottom:84px">Criado e assinado por Miguel Sacramento · versão 29.10-d</footer>
 
 <nav aria-label="Principal" class="fixed bottom-0 inset-x-0 flex gap-1 border-t px-2" style="background:var(--sf);border-color:var(--ln);padding-bottom:calc(10px + env(safe-area-inset-bottom,0px))">
   <button class="tab on" data-v="home" aria-label="Início"><span class="ti"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>Início</button>
@@ -282,7 +282,7 @@ button.tile{cursor:pointer}
 </div>
 <div id="login" class="hide fixed inset-0 z-40 overflow-auto p-4" style="background:var(--bg)">
  <div class="max-w-sm mx-auto mt-8">
-  <h1 class="text-3xl font-bold text-center">Migueltech Field App</h1>
+  <h1 class="text-3xl font-bold text-center">Delta<span style="color:var(--ac)">Field</span></h1><div class="text-xs text-center" style="color:var(--mu);letter-spacing:.08em;text-transform:uppercase">Telecomunicações</div>
   <p class="text-center text-sm mb-4" style="color:var(--mu)">Entre para continuar</p>
   <div class="flex gap-2 mb-3"><button class="btn flex-1 lseg" data-l="in">Entrar</button><button class="btn2 flex-1 lseg" data-l="new">Criar conta</button><button class="btn2 flex-1 lseg" data-l="rec">Recuperar</button></div>
   <div class="card p-4">
@@ -648,7 +648,7 @@ function drawCal(){
 function drawDay(k,t){
   const [y,m,d]=k.split('-').map(Number),tot=t.reduce((a,x)=>a+val(x),0),f=dt=>dt.getFullYear()+pad(dt.getMonth()+1)+pad(dt.getDate());
   const det=t.map(x=>`${x.tipo} · ${x.wo||'sem WO'} · ${x.cli||''} · ${eur(val(x))}`).join('\n');
-  const url='https://calendar.google.com/calendar/render?action=TEMPLATE&text='+encodeURIComponent('Migueltech: '+t.length+' tarefa(s) · '+eur(tot))+'&dates='+f(new Date(y,m-1,d))+'/'+f(new Date(y,m-1,d+1))+'&details='+encodeURIComponent(det);
+  const url='https://calendar.google.com/calendar/render?action=TEMPLATE&text='+encodeURIComponent('DeltaField: '+t.length+' tarefa(s) · '+eur(tot))+'&dates='+f(new Date(y,m-1,d))+'/'+f(new Date(y,m-1,d+1))+'&details='+encodeURIComponent(det);
   $('cday').classList.remove('hide');
   $('cday').innerHTML=`<b>${pad(d)}/${pad(m)}/${y}</b>`+(t.length?t.map(x=>`<div class="text-sm mt-1">${esc(x.tipo)} · ${esc(x.wo||'sem WO')} <span style="color:var(--mu)">${esc(x.cli||'')}</span> <b style="float:right">${eur(val(x))}</b></div>`).join('')+`<div class="mt-2 font-bold">Total do dia: ${eur(tot)}</div><div class="mt-2"><div class="lbl mb-1">Por tipo</div>${typeRows(byType(t))}</div><a class="btn block text-center mt-3" target="_blank" rel="noopener" href="${url}">Adicionar ao Google Calendar</a>`:'<div class="text-sm mt-1" style="color:var(--mu)">Sem tarefas neste dia.</div>');
 }
@@ -790,7 +790,7 @@ $('li_go').onclick=async()=>{if(sbInit())return sbSignIn();
 $('lr_send').onclick=()=>{if(sbInit())return sbRecover();
   const e=norm($('lr_e').value);if(!users().some(u=>u.email===e))return lmsg('Não existe conta com esse email.');
   const code=String(Math.floor(100000+Math.random()*900000));store.set('mt_rec',{email:e,code,exp:Date.now()+15*60000});
-  window.open('mailto:'+e+'?subject='+encodeURIComponent('Código de recuperação - Migueltech Field App')+'&body='+encodeURIComponent('O seu código é '+code+'. Válido durante 15 minutos.'),'_blank');
+  window.open('mailto:'+e+'?subject='+encodeURIComponent('Código de recuperação - DeltaField')+'&body='+encodeURIComponent('O seu código é '+code+'. Válido durante 15 minutos.'),'_blank');
   lmsg('Código preparado no seu email. Escreva-o abaixo.');
 };
 $('lr_go').onclick=async()=>{if(sbInit())return lmsg('Use o link enviado ao seu email para definir a nova password.');
