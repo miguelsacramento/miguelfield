@@ -278,7 +278,7 @@ button.tile{cursor:pointer}
 </section>
 </main>
 
-<footer class="text-center text-xs py-2" style="color:var(--mu);margin-bottom:84px">Criado e assinado por Miguel Sacramento · versão 29.10-l</footer>
+<footer class="text-center text-xs py-2" style="color:var(--mu);margin-bottom:84px">Criado e assinado por Miguel Sacramento · versão 29.10-m</footer>
 
 <nav aria-label="Principal" class="fixed bottom-0 inset-x-0 flex gap-1 border-t px-2" style="background:var(--sf);border-color:var(--ln);padding-bottom:calc(10px + env(safe-area-inset-bottom,0px))">
   <button class="tab on" data-v="home" aria-label="Início"><span class="ti"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>Início</button>
@@ -453,7 +453,9 @@ $('files').onchange=async e=>{
   $('thumbs').innerHTML='';fs.forEach(f=>{const i=new Image();i.src=URL.createObjectURL(f);i.className='h-16 rounded border';i.style.borderColor='var(--ln)';$('thumbs').appendChild(i)});
   texts=[];$('ia_aviso').textContent='';
   // OCR no telemóvel e, se ligada no Perfil, leitura com IA ao mesmo tempo.
-  const [o,ia]=await Promise.allSettled([LeitorPrints.ocr(fs,'prog'),LeitorPrints.ia(fs)]);
+  const pIA=LeitorPrints.ia(fs);
+  const pOCR=LeitorPrints.ocr(fs,'prog').then(r=>{if(LeitorPrints.iaLigada())progShow('prog',null,'(a IA está a ler os prints)');return r});
+  const [o,ia]=await Promise.allSettled([pOCR,pIA]);
   const campos=ia.status==='fulfilled'?ia.value:null;
   if(LeitorPrints.iaLigada()&&!campos)toast('Leitura com IA indisponível. Usei o OCR do telemóvel.');
   try{
@@ -485,11 +487,14 @@ const LeitorPrints={
     progShow(progId,100);return out;
   },
   iaLigada(){return !!store.get('mt_ia',false)},
+  IA_MS:70000, // tempo máximo de espera pela IA; depois usa só o OCR
   // Leitura com IA (função 'ler-print' no Supabase → Cloudflare Workers AI). Devolve os campos ou null.
   async ia(fs){
     if(!this.iaLigada()||!sb||!SBMODE)return null;
     const imagens=await Promise.all(fs.slice(0,4).map(f=>this.paraJpeg(f)));
-    const{data,error}=await sb.functions.invoke('ler-print',{body:{imagens}});
+    const pedido=sb.functions.invoke('ler-print',{body:{imagens}});
+    const limite=new Promise(ok=>setTimeout(()=>ok({error:{message:'tempo esgotado'}}),this.IA_MS));
+    const{data,error}=await Promise.race([pedido,limite]);
     return !error&&data&&data.campos?data.campos:null;
   },
   paraJpeg(f){return new Promise((ok,no)=>{const i=new Image();i.onload=()=>{const k=Math.min(1,1600/Math.max(i.width,i.height)),c=document.createElement('canvas');c.width=Math.max(1,Math.round(i.width*k));c.height=Math.max(1,Math.round(i.height*k));c.getContext('2d').drawImage(i,0,0,c.width,c.height);ok(c.toDataURL('image/jpeg',.85))};i.onerror=()=>no(new Error('img'));i.src=URL.createObjectURL(f)})},
