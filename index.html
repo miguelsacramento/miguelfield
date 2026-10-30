@@ -72,7 +72,8 @@ button.tile{cursor:pointer}
 <body class="min-h-screen flex flex-col">
 <header class="px-4 pt-5 pb-2 flex items-center justify-between gap-3">
   <div class="min-w-0"><div id="hi" class="text-sm" style="color:var(--mu)"></div><h1 class="text-3xl font-bold" style="color:var(--tx);line-height:1.1">Delta<span style="color:var(--ac)">Field</span></h1><div class="text-xs" style="color:var(--mu);letter-spacing:.08em;text-transform:uppercase">Telecomunicações</div></div>
-  <div class="pill"><span class="dot"></span><select id="op" aria-label="Operadora"><option value="nos">NOS</option><option value="vodafone">Vodafone</option><option value="meo">MEO</option></select></div>
+  <div class="flex items-center gap-2" style="flex:none"><button type="button" id="msg_btn" class="pill hide" aria-label="Mensagens" style="padding:0 .8rem;position:relative"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 8.6 8.6 0 0 1-3.8-.9L3 21l1.9-5.2A8.4 8.4 0 0 1 12 3a8.4 8.4 0 0 1 9 8.5z"/></svg><span id="msg_n" class="hide" style="position:absolute;top:-4px;right:-4px;min-width:20px;height:20px;padding:0 5px;border-radius:999px;background:#ef4444;color:#fff;font-size:.72rem;line-height:20px;text-align:center"></span></button>
+  <div class="pill"><span class="dot"></span><select id="op" aria-label="Operadora"><option value="nos">NOS</option><option value="vodafone">Vodafone</option><option value="meo">MEO</option></select></div></div>
 </header>
 
 <main class="flex-1 w-full max-w-xl mx-auto p-4 pb-28">
@@ -261,6 +262,18 @@ button.tile{cursor:pointer}
     <p class="text-xs mt-2" style="color:var(--mu)">O técnico recebe o pedido no Perfil e só entra na equipa se aceitar.</p>
   </div>
   <div id="eq_body" class="mt-3 space-y-3"></div>
+  <div id="eq_fecho" class="card p-4 mt-3"></div>
+  <div class="card p-4 mt-3">
+    <h3 class="hd text-lg font-bold">Pesquisar nas tarefas</h3>
+    <p class="text-xs" style="color:var(--mu)">Número de série, WO, material ou tipo.</p>
+    <div class="flex gap-2 mt-2"><input id="eq_s" class="inp flex-1" placeholder="Ex.: ZTEG1234 ou 778812" autocomplete="off"><button id="eq_s_go" type="button" class="btn">Procurar</button></div>
+    <div id="eq_s_res" class="mt-2 space-y-1" role="status"></div>
+  </div>
+  <div class="card p-4 mt-3">
+    <h3 class="hd text-lg font-bold">A minha percentagem (opcional)</h3>
+    <p class="text-xs" style="color:var(--mu)">Quanto cobra sobre o valor de cada tarefa dos técnicos. A app calcula a sua parte.</p>
+    <div class="flex gap-2 mt-2"><input id="eq_pct" class="inp flex-1" type="number" inputmode="decimal" min="0" max="100" step="0.5" placeholder="Ex.: 15"><button id="eq_pct_save" type="button" class="btn2">Guardar</button></div>
+  </div>
 </section>
 
 <!-- CONFIG -->
@@ -306,7 +319,7 @@ button.tile{cursor:pointer}
 </section>
 </main>
 
-<footer class="text-center text-xs py-2" style="color:var(--mu);margin-bottom:84px">Criado e assinado por Miguel Sacramento · versão 30.10-f</footer>
+<footer class="text-center text-xs py-2" style="color:var(--mu);margin-bottom:84px">Criado e assinado por Miguel Sacramento · versão 30.10-g</footer>
 
 <nav aria-label="Principal" class="fixed bottom-0 inset-x-0 flex gap-1 border-t px-2" style="background:var(--sf);border-color:var(--ln);padding-bottom:calc(10px + env(safe-area-inset-bottom,0px))">
   <button class="tab on" data-v="home" aria-label="Início"><span class="ti"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>Início</button>
@@ -347,6 +360,7 @@ button.tile{cursor:pointer}
   </div>
  </div>
 </div>
+<div id="msg_ov" class="hide" style="position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:60" role="dialog" aria-modal="true" aria-labelledby="msg_h"><div id="msg_box" class="card p-4" style="position:absolute;left:12px;right:12px;top:12px;max-width:560px;margin:0 auto;max-height:80vh;overflow:auto"></div></div>
 <div id="toast" class="hide fixed left-1/2 -translate-x-1/2 bottom-24 px-4 py-2 rounded-lg text-sm" style="background:var(--ac);color:var(--onac)"></div>
 
 <script>
@@ -940,7 +954,7 @@ document.querySelectorAll('.lseg').forEach(b=>b.onclick=()=>{document.querySelec
 $('ln_go').onclick=()=>{if(!$('ln_priv').checked)return lmsg('Aceite o aviso de privacidade para criar a conta.');if(!sbInit())return lmsg(SEM_LIG);sbSignUp()};
 $('li_go').onclick=()=>{if(!sbInit())return lmsg(SEM_LIG);sbSignIn()};
 $('lr_send').onclick=()=>{if(!sbInit())return lmsg(SEM_LIG);sbRecover()};
-$('c_out').onclick=()=>{if(!sbInit())return;sb.auth.signOut().then(()=>{SBMODE=false;myId=null;myRole='tecnico';myVip=false;myCat='tecnico';showRole();startAuth()})};
+$('c_out').onclick=()=>{if(!sbInit())return;sb.auth.signOut().then(()=>{SBMODE=false;myId=null;myRole='tecnico';myVip=false;myCat='tecnico';$('msg_btn').classList.add('hide');$('msg_n').classList.add('hide');showRole();startAuth()})};
 $('calcbtn').onclick=()=>{const open=$('calcbox').classList.toggle('hide')===false;$('calcbtn').setAttribute('aria-expanded',open);$('calcarrow').textContent=open?'▲ Retrair':'▼ Expandir'};
 
 // Instalar a app (ecrã inicial / favoritos)
@@ -1069,7 +1083,7 @@ async function afterLogin(u){
   try{
     const{data:p}=await sb.from('profiles').select('*').eq('id',u.id).single();
     if(p){
-      myRole=p.role||'tecnico';myVip=!!p.vip;myCat=p.categoria||'tecnico';myEmpresa=p.empresa||'';showRole();loadEqMinha();
+      myRole=p.role||'tecnico';myVip=!!p.vip;myCat=p.categoria||'tecnico';myEmpresa=p.empresa||'';showRole();loadEqMinha();loadMsgs();
       if(p.ativo===false){const pend=!!p.pendente,m=pend?'A sua conta foi criada e aguarda a aprovação do administrador. Volte a entrar mais tarde.':'Conta bloqueada pelo administrador.';toast(pend?'Conta a aguardar aprovação':'Conta bloqueada pelo administrador');await sb.auth.signOut();SBMODE=false;startAuth();setTimeout(()=>lmsg(m),700);return}
       const c=store.get('mt_cfg',DEF);Object.assign(c,{nome:p.nome,emp:p.empresa||c.emp,empr:p.empreiteira||'',pais:p.pais||'',mail:c.mail||p.email});_set('mt_cfg',c);loadCfg();
       const v=p.valores||{};['nos','vodafone','meo'].forEach(o=>{if(v[o]&&Object.keys(v[o]).length)_set('mt_rates_'+o,v[o])});
@@ -1210,15 +1224,22 @@ async function loadEquipa(){
   $('eq_body').innerHTML='<p class="text-sm" style="color:var(--mu)">A carregar...</p>';
   const{data,error}=await sb.rpc('equipa_painel',{dias:30});
   if(error||!data){$('eq_body').innerHTML='<p class="text-sm" style="color:var(--warn)">Não foi possível carregar a equipa.</p>';return}
-  drawEquipa(data);
+  drawEquipa(data);loadFecho();
 }
+var eqPct=null;
+const pctTxt=v=>String(+v).replace('.',',')+'%';
+const parte=v=>eqPct==null?0:Math.round((+v||0)*eqPct)/100;
 function drawEquipa(d){
   const T=d.tecnicos||[],A=T.filter(x=>x.estado==='aceite'),L=d.lista||[],PT=d.por_tipo||[];
+  eqPct=d.comissao==null||d.comissao===''?null:+d.comissao;
+  if(document.activeElement!==$('eq_pct'))$('eq_pct').value=eqPct==null?'':eqPct;
   $('h_eqs').textContent=A.length?A.length+(A.length===1?' técnico':' técnicos')+' · '+(+d.tarefas||0)+' tarefas em '+(+d.dias||30)+' dias':'Indicadores dos seus técnicos';
   const tile=(n,t)=>`<div class="card p-3"><div class="big" style="font-size:1.6rem;line-height:1">${n}</div><div class="text-xs mt-1" style="color:var(--mu)">${t}</div></div>`;
   const dt=s=>{const x=new Date(s);return pad(x.getDate())+'/'+pad(x.getMonth()+1)+' '+pad(x.getHours())+':'+pad(x.getMinutes())};
   $('eq_body').innerHTML=!T.length?'<div class="card p-4 text-sm" style="color:var(--mu)">Ainda não tem técnicos. Procure-os acima pelo email ou telefone.</div>':
-  `<div class="grid grid-cols-2 gap-2">${tile(A.length,'técnicos na equipa')}${tile(+d.hoje||0,'tarefas hoje')}${tile(+d.tarefas||0,'tarefas em '+(+d.dias||30)+' dias')}${tile(eur(+d.valor||0),'valor em '+(+d.dias||30)+' dias')}</div>
+  `<div class="grid grid-cols-2 gap-2">${tile(A.length,'técnicos na equipa')}${tile(+d.hoje||0,'tarefas hoje')}${tile(+d.tarefas||0,'tarefas em '+(+d.dias||30)+' dias')}${tile(eur(+d.valor||0),'valor em '+(+d.dias||30)+' dias')}${eqPct==null?'':tile(eur(parte(d.valor)),'A sua parte ('+pctTxt(eqPct)+')')}</div>
+  <div class="card p-3" id="eq_alertas"><h3 class="hd text-lg font-bold">Alertas</h3>${alertasHtml(A)}</div>
+  <div class="card p-3" id="eq_rank"><h3 class="hd text-lg font-bold">Classificação (${+d.dias||30} dias)</h3>${A.length?A.slice().sort((a,b)=>(b.tarefas||0)-(a.tarefas||0)).map((x,i)=>`<div class="flex justify-between gap-2 text-sm"><span class="min-w-0 truncate">${i+1}. <b>${esc(x.nome)}</b></span><span class="text-xs" style="white-space:nowrap;color:var(--mu)">${+x.tarefas||0} tarefas · ${x.dias_ativos?(x.tarefas/x.dias_ativos).toFixed(1).replace('.',','):'0'}/dia · ${+x.incumprimentos||0} incump.</span></div>`).join(''):'<p class="text-sm" style="color:var(--mu)">Sem técnicos na equipa.</p>'}</div>
   ${PT.length?`<div class="card p-3"><h3 class="hd text-lg font-bold">Por tipo</h3>${PT.map(x=>`<div class="flex justify-between gap-2 text-sm"><span class="min-w-0 truncate">${esc(x.tipo)}</span><span style="white-space:nowrap">${+x.n||0} · ${eur(+x.valor||0)}</span></div>`).join('')}</div>`:''}
   <div class="card p-3"><h3 class="hd text-lg font-bold">Técnicos</h3><div class="space-y-2 mt-1">${T.map(x=>`<div class="flex justify-between gap-2 text-sm"><span class="min-w-0"><b>${esc(x.nome)}</b><span class="block text-xs" style="color:var(--mu)">${x.estado==='aceite'?(x.ultima_entrada?'última entrada há '+ago(Date.parse(x.ultima_entrada)):'nunca entrou'):'aguarda resposta ao convite'}</span></span><span class="text-xs text-right" style="white-space:nowrap">${x.estado==='aceite'?`${+x.tarefas||0} tarefas · ${+x.dias_ativos||0} dias<span class="block">${eur(+x.valor||0)}</span>`:''}<button type="button" class="btn2 text-xs mt-1" data-rem="${esc(x.id)}" style="padding:.25rem .6rem;min-height:30px">${x.estado==='aceite'?'Remover':'Cancelar'}</button></span></div>`).join('')}</div></div>
   <div class="card p-3"><h3 class="hd text-lg font-bold">Tarefas (${+d.dias||30} dias)</h3><p class="text-xs" style="color:var(--mu)">Sem dados de clientes.</p><div class="space-y-1 mt-1">${L.length?L.slice(0,100).map(x=>`<div class="flex justify-between gap-2 text-sm" style="border-top:1px solid var(--ln);padding-top:.35rem"><span class="min-w-0"><b>${esc(x.tecnico)}</b> · ${esc(x.tipo)}<span class="block text-xs" style="color:var(--mu)">${x.wo?(/^wo/i.test(x.wo)?'':'WO ')+esc(x.wo)+' · ':''}${esc(String(x.operadora||'').toUpperCase())} · ${dt(x.feita_em)}</span></span><span style="white-space:nowrap">${eur(+x.valor||0)}</span></div>`).join(''):'<p class="text-sm" style="color:var(--mu)">Sem tarefas neste período.</p>'}</div></div>`;
@@ -1246,6 +1267,89 @@ $('eq_body').onclick=async e=>{
   if(error){toast('Não foi possível: '+error.message);b.disabled=false;return}
   toast('Técnico removido da equipa');loadEquipa();
 };
+function alertasHtml(A){
+  const L=A.map(x=>{const a=[];
+    if(!x.hoje)a.push('sem tarefas hoje');
+    if((x.incumprimentos||0)>=3)a.push(x.incumprimentos+' incumprimentos');
+    if(x.sem_wo)a.push(x.sem_wo+(x.sem_wo==1?' tarefa sem WO':' tarefas sem WO'));
+    if(!x.ultima_entrada)a.push('nunca entrou');else if(Date.now()-Date.parse(x.ultima_entrada)>3*864e5)a.push('não entra há '+ago(Date.parse(x.ultima_entrada)));
+    return a.length?`<div class="text-sm"><b>${esc(x.nome)}</b>: <span style="color:var(--warn)">${a.join(' · ')}</span></div>`:''}).filter(Boolean);
+  return L.length?L.join(''):'<p class="text-sm" style="color:var(--ok)">Sem alertas. Tudo em ordem.</p>';
+}
+// Percentagem do empreiteiro
+$('eq_pct_save').onclick=async()=>{
+  if(!sb||myCat!=='empreiteiro')return;
+  const s=$('eq_pct').value.trim().replace(',','.'),v=s===''?null:+s;
+  if(v!=null&&(isNaN(v)||v<0||v>100)){toast('Indique uma percentagem entre 0 e 100');return}
+  const{error}=await sb.from('profiles').update({comissao:v}).eq('id',myId);
+  if(error){toast('Não foi possível guardar');return}
+  toast(v==null?'Percentagem retirada':'Percentagem guardada: '+pctTxt(v));loadEquipa();
+};
+// Pesquisa nas tarefas da equipa (número de série, WO, material)
+$('eq_s_go').onclick=async()=>{
+  const q=$('eq_s').value.trim();if(!sb||myCat!=='empreiteiro')return;
+  if(q.length<3){$('eq_s_res').innerHTML='<p class="text-xs" style="color:var(--warn)">Escreva pelo menos 3 letras ou números.</p>';return}
+  $('eq_s_res').innerHTML='<p class="text-xs" style="color:var(--mu)">A procurar...</p>';
+  const{data,error}=await sb.rpc('equipa_pesquisa',{q:q});
+  if(error){$('eq_s_res').innerHTML='<p class="text-xs" style="color:var(--warn)">Não foi possível pesquisar.</p>';return}
+  const R=data||[],dt=s=>new Date(s).toLocaleDateString('pt-PT');
+  $('eq_s_res').innerHTML=R.length?R.map(x=>`<div class="text-sm" style="border-top:1px solid var(--ln);padding-top:.35rem"><b>${esc(x.tecnico)}</b> · ${esc(x.tipo)} · ${dt(x.feita_em)}<span class="block text-xs" style="color:var(--mu)">${x.wo?'WO '+esc(x.wo)+' · ':''}${esc(String(x.operadora||'').toUpperCase())}</span>${x.material?`<span class="block text-xs whitespace-pre-wrap">${esc(x.material)}</span>`:''}</div>`).join(''):'<p class="text-xs" style="color:var(--mu)">Nada encontrado.</p>';
+};
+$('eq_s').onkeydown=e=>{if(e.key==='Enter')$('eq_s_go').click()};
+// Fecho semanal (segunda a domingo): resumo, Excel (CSV) e PDF (imprimir)
+const ymd=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+const dm=d=>pad(d.getDate())+'/'+pad(d.getMonth()+1);
+function segunda(d){const x=new Date(d.getFullYear(),d.getMonth(),d.getDate());x.setDate(x.getDate()-((x.getDay()+6)%7));return x}
+var fxIni=segunda(new Date()),fxRows=[];
+const fxFim=()=>{const x=new Date(fxIni);x.setDate(x.getDate()+6);return x};
+const num2=v=>(+v||0).toFixed(2).replace('.',',');
+async function loadFecho(){
+  if(!sb||myCat!=='empreiteiro')return;
+  $('eq_fecho').innerHTML='<h3 class="hd text-lg font-bold">Fecho semanal</h3><p class="text-xs" style="color:var(--mu)">A carregar...</p>';
+  const{data,error}=await sb.rpc('equipa_fecho',{de:ymd(fxIni),ate:ymd(fxFim())});
+  if(error){$('eq_fecho').innerHTML='<h3 class="hd text-lg font-bold">Fecho semanal</h3><p class="text-xs" style="color:var(--warn)">Não foi possível carregar.</p>';return}
+  fxRows=data||[];drawFecho();
+}
+function fxResumo(){
+  const M=new Map();fxRows.forEach(x=>{const k=x.tecnico||'Técnico',o=M.get(k)||{n:0,v:0};o.n++;o.v+=+x.valor||0;M.set(k,o)});
+  return{por:[...M.entries()],n:fxRows.length,v:fxRows.reduce((s,x)=>s+(+x.valor||0),0)};
+}
+function drawFecho(){
+  const R=fxResumo(),fut=fxIni>segunda(new Date())||+fxIni===+segunda(new Date());
+  $('eq_fecho').innerHTML=`<div class="flex justify-between items-center gap-2"><h3 class="hd text-lg font-bold">Fecho semanal</h3><span class="flex gap-1"><button type="button" class="btn2 text-xs" data-fx="-1" aria-label="Semana anterior" style="padding:.3rem .7rem;min-height:34px">‹</button><button type="button" class="btn2 text-xs" data-fx="1" aria-label="Semana seguinte" style="padding:.3rem .7rem;min-height:34px"${fut?' disabled':''}>›</button></span></div>
+  <div class="text-sm" style="color:var(--mu)">${dm(fxIni)} a ${dm(fxFim())}/${fxFim().getFullYear()}</div>
+  <div class="space-y-1 mt-2">${R.por.length?R.por.map(([k,o])=>`<div class="flex justify-between gap-2 text-sm"><span class="min-w-0 truncate"><b>${esc(k)}</b></span><span style="white-space:nowrap">${o.n} ${o.n==1?'tarefa':'tarefas'} · ${eur(o.v)}</span></div>`).join(''):'<p class="text-sm" style="color:var(--mu)">Sem tarefas nesta semana.</p>'}</div>
+  <div class="flex justify-between gap-2 text-sm mt-2" style="border-top:1px solid var(--ln);padding-top:.4rem"><b>Total</b><b>${R.n} ${R.n==1?'tarefa':'tarefas'} · ${eur(R.v)}</b></div>
+  ${eqPct==null?'':`<div class="flex justify-between gap-2 text-sm"><span>A sua parte (${pctTxt(eqPct)})</span><b>${eur(parte(R.v))}</b></div>`}
+  <div class="flex gap-2 mt-3"><button type="button" id="fx_csv" class="btn2 flex-1"${R.n?'':' disabled'}>Excel</button><button type="button" id="fx_pdf" class="btn2 flex-1"${R.n?'':' disabled'}>PDF</button></div>`;
+}
+$('eq_fecho').onclick=e=>{
+  const b=e.target.closest('button');if(!b||b.disabled)return;
+  if(b.dataset.fx){fxIni.setDate(fxIni.getDate()+7*(+b.dataset.fx));fxIni=new Date(fxIni);loadFecho();return}
+  if(b.id==='fx_csv')fxCsv();if(b.id==='fx_pdf')fxPdf();
+};
+function fxCsv(){
+  const cel=s=>{s=String(s==null?'':s);if(/^[=+\-@\t\r]/.test(s))s="'"+s;return /[;"\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s};
+  const P=eqPct!=null,dt=s=>new Date(s).toLocaleDateString('pt-PT'),R=fxResumo();
+  const L=[['Técnico','Data','Operadora','Tipo','WO','Valor'].concat(P?['A sua parte']:[]).join(';')];
+  fxRows.forEach(x=>L.push([x.tecnico,dt(x.feita_em),String(x.operadora||'').toUpperCase(),x.tipo,x.wo,num2(x.valor)].map(cel).concat(P?[num2(parte(x.valor))]:[]).join(';')));
+  L.push('');R.por.forEach(([k,o])=>L.push([cel('Subtotal '+k),'','','',o.n+' tarefas',num2(o.v)].concat(P?[num2(parte(o.v))]:[]).join(';')));
+  L.push(['TOTAL','','','',R.n+' tarefas',num2(R.v)].concat(P?[num2(parte(R.v))]:[]).join(';'));
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\ufeff'+L.join('\r\n')],{type:'text/csv;charset=utf-8'}));
+  a.download='fecho-semana-'+ymd(fxIni)+'.csv';document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000);
+}
+function fxPdf(){
+  const R=fxResumo(),P=eqPct!=null,emp=(myEmpresa||'').trim()||'Empreiteiro',dt=s=>new Date(s).toLocaleDateString('pt-PT'),per=dm(fxIni)+' a '+dm(fxFim())+'/'+fxFim().getFullYear();
+  const w=window.open('','_blank');if(!w){toast('Permita janelas pop-up para gerar o PDF');return}
+  const th='<tr><th>Técnico</th><th>Data</th><th>Operadora</th><th>Tipo</th><th>WO</th><th>Valor</th>'+(P?'<th>A sua parte</th>':'')+'</tr>';
+  const tr=fxRows.map(x=>`<tr><td>${esc(x.tecnico)}</td><td>${dt(x.feita_em)}</td><td>${esc(String(x.operadora||'').toUpperCase())}</td><td>${esc(x.tipo)}</td><td>${esc(x.wo||'')}</td><td class=n>${eur(+x.valor||0)}</td>${P?`<td class=n>${eur(parte(x.valor))}</td>`:''}</tr>`).join('');
+  const sub=R.por.map(([k,o])=>`<tr><td>${esc(k)}</td><td class=n>${o.n}</td><td class=n>${eur(o.v)}</td>${P?`<td class=n>${eur(parte(o.v))}</td>`:''}</tr>`).join('');
+  w.document.open();w.document.write(`<!doctype html><html lang="pt-PT"><head><meta charset="utf-8"><title>Fecho semanal ${esc(emp)} ${per}</title><style>body{font-family:system-ui,sans-serif;color:#111;margin:24px}h1{font-size:20px;margin:0}p{color:#555;margin:4px 0 16px}table{border-collapse:collapse;width:100%;font-size:12px;margin-bottom:18px}th,td{border:1px solid #ccc;padding:5px 6px;text-align:left}th{background:#f1f3f6}.n{text-align:right;white-space:nowrap}tfoot td{font-weight:700}</style></head><body>
+<h1>Fecho semanal · ${esc(emp)}</h1><p>${per} · gerado pela DeltaField em ${new Date().toLocaleString('pt-PT')}</p>
+<table><thead><tr><th>Técnico</th><th>Tarefas</th><th>Valor</th>${P?'<th>A sua parte ('+pctTxt(eqPct)+')</th>':''}</tr></thead><tbody>${sub}</tbody><tfoot><tr><td>Total</td><td class=n>${R.n}</td><td class=n>${eur(R.v)}</td>${P?`<td class=n>${eur(parte(R.v))}</td>`:''}</tr></tfoot></table>
+<table><thead>${th}</thead><tbody>${tr}</tbody></table></body></html>`);
+  w.document.close();w.focus();setTimeout(()=>{try{w.print()}catch(e){}},300);
+}
 // Técnico: convites recebidos e equipa atual (no Perfil)
 async function loadEqMinha(){
   if(!sb||!SBMODE)return;
@@ -1266,6 +1370,41 @@ $('eq_conv').onclick=async e=>{
   if(error){toast(/já está numa equipa/.test(error.message)?'Já está numa equipa. Saia dela primeiro.':'Não foi possível: '+error.message);(a||s).disabled=false;return}
   toast(a?(a.dataset.ace==='1'?'Entrou na equipa':'Convite recusado'):'Saiu da equipa');loadEqMinha();
 };
+// ---- Balão de mensagens: empreiteiro escreve à equipa; técnico lê e pode enviar email à empreiteira ----
+var msgs=[],msgCont=null;
+async function loadMsgs(){
+  if(!sb||!SBMODE)return;
+  $('msg_btn').classList.remove('hide');
+  const[a,b]=await Promise.all([sb.rpc('minhas_mensagens'),myCat==='empreiteiro'?Promise.resolve({data:null}):sb.rpc('equipa_contacto')]);
+  msgs=(a&&a.data)||[];const c=(b&&b.data)||[];msgCont=c[0]||null;
+  const seen=+store.get('mt_msg_seen',0),n=msgs.filter(x=>!x.minha&&Date.parse(x.criado_em)>seen).length;
+  $('msg_n').textContent=n>9?'9+':String(n);$('msg_n').classList.toggle('hide',!n);
+  if(!$('msg_ov').classList.contains('hide'))drawMsgs();
+}
+function drawMsgs(){
+  const dt=s=>new Date(s).toLocaleString('pt-PT',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+  const lista=L=>L.length?L.map(x=>`<div class="text-sm" style="border-top:1px solid var(--ln);padding-top:.4rem"><span class="text-xs" style="color:var(--mu)">${esc(x.de)} · ${dt(x.criado_em)}</span><div class="whitespace-pre-wrap">${esc(x.texto)}</div></div>`).join(''):'<p class="text-sm" style="color:var(--mu)">Sem mensagens.</p>';
+  const top=`<div class="flex justify-between items-center"><h2 id="msg_h" class="text-xl font-bold">Mensagens</h2><button type="button" id="msg_close" class="btn2 text-xs" style="padding:.3rem .7rem;min-height:34px">Fechar</button></div>`;
+  let body;
+  if(myCat==='empreiteiro'){
+    body=`<label for="msg_txt">Mensagem para toda a equipa</label><textarea id="msg_txt" rows="3" class="inp" maxlength="1000" placeholder="Ex.: Amanhã começamos às 8h no armazém."></textarea><button type="button" id="msg_send" class="btn w-full mt-2">Enviar à equipa</button><h3 class="hd text-lg font-bold mt-4">Enviadas</h3><div class="space-y-2 mt-1">${lista(msgs.filter(x=>x.minha))}</div>`;
+  }else if(msgCont){
+    const nm=msgCont.empresa||msgCont.nome,c=store.get('mt_cfg',DEF);
+    body=`<p class="text-sm" style="color:var(--mu)">Equipa de <b style="color:var(--tx)">${esc(nm)}</b></p><a id="msg_mail" class="btn2 w-full mt-2 flex items-center justify-center" href="mailto:${/^[^\s@?&#<>"]+@[^\s@?&#<>"]+$/.test(msgCont.email||'')?msgCont.email:''}?subject=${encodeURIComponent('DeltaField · '+(c.nome||'Técnico'))}">Enviar email à empreiteira</a><div class="space-y-2 mt-3">${lista(msgs.filter(x=>!x.minha))}</div>`;
+  }else body='<p class="text-sm mt-2" style="color:var(--mu)">Ainda não faz parte de nenhuma equipa. Quando um empreiteiro o convidar, aceite o convite no Perfil.</p>';
+  $('msg_box').innerHTML=top+'<div class="mt-2">'+body+'</div>';
+}
+$('msg_btn').onclick=()=>{store.set('mt_msg_seen',Date.now());$('msg_n').classList.add('hide');$('msg_ov').classList.remove('hide');drawMsgs();loadMsgs()};
+$('msg_ov').onclick=async e=>{
+  if(e.target===$('msg_ov')||e.target.id==='msg_close'){$('msg_ov').classList.add('hide');return}
+  if(e.target.id==='msg_send'){
+    const t=$('msg_txt').value.trim();if(!t)return toast('Escreva a mensagem');
+    e.target.disabled=true;const{error}=await sb.rpc('equipa_mensagem',{texto:t});e.target.disabled=false;
+    if(error)return toast(/demasiadas/.test(error.message)?'Limite de 20 mensagens por dia':'Não foi possível enviar');
+    $('msg_txt').value='';toast('Mensagem enviada à equipa');loadMsgs();
+  }
+};
+document.addEventListener('keydown',e=>{if(e.key==='Escape')$('msg_ov').classList.add('hide')});
 // ---- Admin: painel de uso do piloto (dados da função admin_uso, só para o admin) ----
 async function loadUso(){
   if(!sb||myRole!=='admin')return;
