@@ -319,7 +319,7 @@ button.tile{cursor:pointer}
 </section>
 </main>
 
-<footer class="text-center text-xs py-2" style="color:var(--mu);margin-bottom:84px">Criado e assinado por Miguel Sacramento · versão 30.10-g</footer>
+<footer class="text-center text-xs py-2" style="color:var(--mu);margin-bottom:84px">Criado e assinado por Miguel Sacramento · versão 30.10-h</footer>
 
 <nav aria-label="Principal" class="fixed bottom-0 inset-x-0 flex gap-1 border-t px-2" style="background:var(--sf);border-color:var(--ln);padding-bottom:calc(10px + env(safe-area-inset-bottom,0px))">
   <button class="tab on" data-v="home" aria-label="Início"><span class="ti"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>Início</button>
@@ -388,10 +388,12 @@ const Tarefas={
     return [...m.values()].sort((a,b)=>b.n-a.n||a.tipo.localeCompare(b.tipo,'pt'));
   },
   guardar(t){const h=this.todas();h.unshift(t);this._gravar(h);setTimeout(()=>this.sincronizar(),300);return t},
-  // Só o admin apaga. Apaga primeiro na nuvem; se falhar, não apaga no telemóvel (senão voltava no login seguinte).
+  // O técnico só apaga tarefas de hoje; o admin apaga qualquer uma (a base de dados aplica a mesma regra).
+  deHoje(x){const f=d=>new Date(d).toLocaleDateString('pt-PT',{timeZone:'Europe/Lisbon'});return !!(x&&x.data)&&f(x.data)===f(Date.now())},
+  podeApagar(x){return myRole==='admin'||this.deHoje(x)},
+  // Apaga primeiro na nuvem; se falhar, não apaga no telemóvel (senão voltava no login seguinte).
   async apagar(id){
-    if(myRole!=='admin')return false;
-    const x=this.porId(id);if(!x)return false;
+    const x=this.porId(id);if(!x||!this.podeApagar(x))return false;
     if(x.cid){
       if(!sb||!SBMODE){toast('Sem ligação à conta. Não foi possível apagar.');return false}
       const{error}=await sb.from('tarefas').delete().eq('id',x.cid);
@@ -691,7 +693,7 @@ $('em').onclick=async()=>{
 const esc=s=>String(s||'').replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
 const safeUrl=u=>/^https?:\/\/[^\s]+$/i.test(String(u||''))?String(u):'';
 window.cp=async id=>{const x=Tarefas.porId(id);if(!x)return;let ok=false;try{await navigator.clipboard.writeText(x.txt);ok=true}catch(e){try{const t=document.createElement('textarea');t.value=x.txt;t.style.position='fixed';t.style.opacity='0';document.body.appendChild(t);t.select();ok=document.execCommand('copy');t.remove()}catch(e2){}}toast(ok?'Relatório copiado':'Não foi possível copiar')};
-window.del=async id=>{if(myRole!=='admin'||!confirm('Apagar esta tarefa? Sai do telemóvel e da nuvem.'))return;if(await Tarefas.apagar(id)){renderHist();drawHome();toast('Tarefa apagada')}};
+window.del=async id=>{if(!Tarefas.podeApagar(Tarefas.porId(id))||!confirm('Apagar esta tarefa? Sai do telemóvel e da nuvem.'))return;if(await Tarefas.apagar(id)){renderHist();drawHome();toast('Tarefa apagada')}};
 $('q').oninput=renderHist;
 function applyTheme(t){document.documentElement.dataset.theme=t;$('c_tema').value=t}
 $('c_tema').onchange=e=>{applyTheme(e.target.value);store.set('mt_theme',e.target.value)};
@@ -889,7 +891,7 @@ function renderHist(){
   h.forEach(x=>{const k=dkey(x.data);(g.get(k)||g.set(k,[]).get(k)).push(x)});
   $('list').innerHTML=h.length?[...g].map(([k,it])=>{const tot=Tarefas.total(it);
     return `<div class="mt-4"><div class="flex justify-between items-baseline gap-2"><h3 class="lbl">${dayLabel(k)} · ${it.length} ${it.length===1?'tarefa':'tarefas'}</h3><b class="big" style="font-size:1.35rem">${tot?eur(tot):''}</b></div><div class="tsum">${Tarefas.porTipo(it).map(t=>esc(t.tipo)+' ×'+t.n).join(' · ')}</div>`+
-    it.map(x=>`<details class="tile hcard"><summary class="hsum"><span class="ico">${taskIcon(x.tipo)}</span><span class="min-w-0"><b class="block hd text-lg" style="line-height:1.15">${esc(x.tipo)}</b><span class="block text-xs" style="color:var(--mu)">${esc(OPN[x.op]||'')}${x.op?' · ':''}${x.wo?'OT '+esc(x.wo):'Sem OT'} · ${hora(x.data)}${x.cli?' · '+esc(x.cli):''}</span><span class="block text-xs mt-1 ${x.cid?'sync-ok':'sync-no'}">${svgI(x.cid?'cloud':'phone',14)} ${x.cid?'Na nuvem':'Só neste telemóvel'}</span></span><b class="big" style="font-size:1.5rem;line-height:1.1">${Tarefas.valor(x)?eur(Tarefas.valor(x)):''}</b></summary><pre class="text-xs mt-3 whitespace-pre-wrap">${esc(x.txt)}</pre><div class="flex gap-2 mt-2"><button class="btn2 text-sm flex-1" onclick="cp(${x.id})">Copiar</button>${myRole==='admin'?`<button class="btn2 text-sm flex-1" onclick="del(${x.id})">Apagar</button>`:''}</div></details>`).join('')+'</div>'}).join(''):'<p class="text-sm text-center mt-6" style="color:var(--mu)">Sem intervenções. Envie a primeira tarefa para a ver aqui.</p>';
+    it.map(x=>`<details class="tile hcard"><summary class="hsum"><span class="ico">${taskIcon(x.tipo)}</span><span class="min-w-0"><b class="block hd text-lg" style="line-height:1.15">${esc(x.tipo)}</b><span class="block text-xs" style="color:var(--mu)">${esc(OPN[x.op]||'')}${x.op?' · ':''}${x.wo?'OT '+esc(x.wo):'Sem OT'} · ${hora(x.data)}${x.cli?' · '+esc(x.cli):''}</span><span class="block text-xs mt-1 ${x.cid?'sync-ok':'sync-no'}">${svgI(x.cid?'cloud':'phone',14)} ${x.cid?'Na nuvem':'Só neste telemóvel'}</span></span><b class="big" style="font-size:1.5rem;line-height:1.1">${Tarefas.valor(x)?eur(Tarefas.valor(x)):''}</b></summary><pre class="text-xs mt-3 whitespace-pre-wrap">${esc(x.txt)}</pre><div class="flex gap-2 mt-2"><button class="btn2 text-sm flex-1" onclick="cp(${x.id})">Copiar</button>${Tarefas.podeApagar(x)?`<button class="btn2 text-sm flex-1" data-apagar="${x.id}" onclick="del(${x.id})">Apagar</button>`:''}</div></details>`).join('')+'</div>'}).join(''):'<p class="text-sm text-center mt-6" style="color:var(--mu)">Sem intervenções. Envie a primeira tarefa para a ver aqui.</p>';
 }
 $('hchips').onclick=e=>{const b=e.target.closest('button[data-t]');if(!b)return;hFilter=b.dataset.t;renderHist()};
 
