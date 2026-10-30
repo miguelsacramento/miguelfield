@@ -1184,8 +1184,9 @@ $('nw_go').onclick=async()=>{
   nmsg('Notícia publicada.');toast('Notícia publicada');await sbLoad();
 };
 function drawNewsAdmin(){
-  const L=(feeds.news||[]).filter(n=>!n.auto).slice(0,10);
-  $('nw_list').innerHTML=L.length?L.map(n=>`<div class="flex items-center justify-between gap-2 text-sm"><span class="min-w-0 truncate">${esc(n.t)}</span><button type="button" class="btn2 text-xs" data-nid="${esc(n.id)}" style="padding:.35rem .7rem">Apagar</button></div>`).join(''):'<div class="text-xs" style="color:var(--mu)">Ainda sem notícias publicadas.</div>';
+  // Primeiro as publicadas pelo admin; depois as automáticas mais recentes (para apagar as que não interessam).
+  const N=feeds.news||[],L=N.filter(n=>!n.auto).slice(0,10).concat(N.filter(n=>n.auto).slice(0,15));
+  $('nw_list').innerHTML=L.length?L.map(n=>`<div class="flex items-center justify-between gap-2 text-sm"><span class="min-w-0 truncate">${n.auto?'<span class="text-xs" style="color:var(--mu)">automática · </span>':''}${esc(n.t)}</span><button type="button" class="btn2 text-xs" data-nid="${esc(n.id)}" style="padding:.35rem .7rem">Apagar</button></div>`).join(''):'<div class="text-xs" style="color:var(--mu)">Ainda sem notícias publicadas.</div>';
 }
 $('nw_list').onclick=async e=>{
   const b=e.target.closest('button[data-nid]');if(!b||myRole!=='admin'||!sb)return;
