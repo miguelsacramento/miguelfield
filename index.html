@@ -190,7 +190,7 @@ button.tile{cursor:pointer}
   </div>
   <div id="modo" class="text-xs mb-2" style="color:var(--mu)"></div>
 
-  <div id="s-news" class="space-y-2"><div id="n_list" class="space-y-2"></div><div class="hide">
+  <div id="s-news" class="space-y-2"><div id="n_reg" class="flex gap-2"><button type="button" class="btn flex-1 text-sm" data-r="pt" aria-pressed="true">Portugal</button><button type="button" class="btn2 flex-1 text-sm" data-r="mundo" aria-pressed="false">Mundo</button></div><div id="n_list" class="space-y-2"></div><div class="hide">
     <div class="text-xs" style="color:var(--mu)">Resumo recolhido a 25/10/2026. As notícias não se atualizam sozinhas.</div>
     <a class="card p-3 block" target="_blank" rel="noopener" href="https://senalnews.com/en/digital/portugal-pay-tv-market-stalls-at-47-million-subscriptions"><b class="hd text-lg">Anacom: TV paga estagna nos 4,7 milhões</b><p class="text-sm mt-1" style="color:var(--mu)">No 2.º trimestre de 2026 havia 4,7 milhões de subscrições, mais 0,3% do que um ano antes. Fonte: SenalNews, 11/09/2026.</p></a>
     <a class="card p-3 block" target="_blank" rel="noopener" href="https://pt.linkedin.com/in/nuno-prates-25a2b48"><b class="hd text-lg">NOS leva fibra a todos os concelhos</b><p class="text-sm mt-1" style="color:var(--mu)">A operadora fala num investimento de 326 milhões de euros em 10 anos para cobrir todo o país, incluindo zonas rurais. Fonte: publicação no LinkedIn (data não confirmada).</p></a>
@@ -223,9 +223,10 @@ button.tile{cursor:pointer}
 
 <!-- CONFIG -->
 <section id="v-cfg" class="hide">
+  <button id="c_ind" type="button" class="btn w-full mb-3 flex items-center justify-center gap-2"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>Indique a um técnico</button>
   <div class="card p-4">
-    <h2 class="text-xl font-bold">Perfil do técnico <span id="vipb" class="vip hide">⭐ VIP</span></h2>
-    <label>Nome</label><input id="c_nome" class="inp">
+    <h2 class="text-xl font-bold">Perfil do técnico</h2>
+    <label id="c_nome_lbl">Nome <span id="vipb" class="vip hide">⭐ VIP</span></label><input id="c_nome" class="inp">
     <label>País / Zona</label><input id="c_pais" class="inp">
     <label>Empresa</label><input id="c_emp" class="inp">
     <label>Empreiteira</label><input id="c_empr" class="inp">
@@ -281,7 +282,7 @@ button.tile{cursor:pointer}
 </section>
 </main>
 
-<footer class="text-center text-xs py-2" style="color:var(--mu);margin-bottom:84px">Criado e assinado por Miguel Sacramento · versão 30.10-b</footer>
+<footer class="text-center text-xs py-2" style="color:var(--mu);margin-bottom:84px">Criado e assinado por Miguel Sacramento · versão 30.10-c</footer>
 
 <nav aria-label="Principal" class="fixed bottom-0 inset-x-0 flex gap-1 border-t px-2" style="background:var(--sf);border-color:var(--ln);padding-bottom:calc(10px + env(safe-area-inset-bottom,0px))">
   <button class="tab on" data-v="home" aria-label="Início"><span class="ti"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>Início</button>
@@ -409,6 +410,12 @@ $('h_new').onclick=()=>go('new');$('n_back').onclick=()=>go('home');
 $('h_com').onclick=()=>go('com');$('h_all').onclick=()=>go('hist');
 
 // Perfil
+// Indicar a app a um colega: partilha nativa do telemóvel ou, sem ela, WhatsApp.
+$('c_ind').onclick=async()=>{
+  const url=location.origin+location.pathname,text='Experimenta a DeltaField, a app para técnicos de telecomunicações: regista tarefas, lê os prints e faz o relatório por ti.';
+  if(navigator.share){try{await navigator.share({title:'DeltaField',text:text,url:url})}catch(e){}return}
+  window.open('https://wa.me/?text='+encodeURIComponent(text+' '+url),'_blank');
+};
 function loadCfg(){const c=store.get('mt_cfg',DEF);$('c_nome').value=c.nome;$('c_emp').value=c.emp;$('c_mail').value=c.mail||'';$('c_pais').value=c.pais||'';$('c_empr').value=c.empr||'';$('c_chat').value=c.chat||''}
 $('save').onclick=()=>{store.set('mt_cfg',{nome:$('c_nome').value,pais:$('c_pais').value,emp:$('c_emp').value,empr:$('c_empr').value,mail:$('c_mail').value,tok:(store.get('mt_cfg',DEF).tok||''),chat:$('c_chat').value});toast('Perfil guardado')};
 loadCfg();
@@ -691,10 +698,16 @@ const NEWS=[
 {id:'n3',ts:1792886400000,t:'Concurso de fibra para o interior',d:'Projeto de cerca de 425 milhões de euros para mais de 400 mil casas, com cobertura do continente prevista até 2026/2027. Fonte: Pplware (data não confirmada).',url:'https://pplware.sapo.pt/?p=964250'}];
 async function vote(nid,v){if(!SBMODE)return toast('Entre na sua conta para votar.');return sbVote(nid,v)}
 window.vote=vote;
+// Notícias: Portugal ou Mundo. As automáticas chegam a cada 6 horas pela função noticias-auto.
+var newsReg='pt';
+$('n_reg').onclick=e=>{const b=e.target.closest('button[data-r]');if(!b)return;newsReg=b.dataset.r;
+  document.querySelectorAll('#n_reg button').forEach(x=>{const on=x===b;x.className=(on?'btn':'btn2')+' flex-1 text-sm';x.setAttribute('aria-pressed',String(on))});drawNews()};
 function drawNews(){
-  const real=feeds.news&&feeds.news.length,L=(real?feeds.news:NEWS).slice(0,10),V=feeds.votes||[];
+  const real=feeds.news&&feeds.news.length,V=feeds.votes||[];
+  const L=(real?feeds.news.filter(n=>(n.reg||'pt')===newsReg):(newsReg==='pt'?NEWS:[])).slice(0,15);
+  if(!L.length){$('n_list').innerHTML='<p class="text-sm text-center" style="color:var(--mu)">Ainda sem notícias aqui. Chegam sozinhas ao longo do dia.</p>';return}
   const me0=id=>(V.find(x=>x.id===id+'_'+(myId||'local'))||{}).v;
-  $('n_list').innerHTML='<div class="text-xs" style="color:var(--mu)">'+(real?'Atualizado em '+new Date(Math.max(...L.map(x=>x.ts||0))).toLocaleDateString('pt-PT'):'Resumo recolhido a 25/10/2026.')+'</div>'+L.map(n=>{const u=V.filter(x=>x.news===n.id&&x.v===1).length,d=V.filter(x=>x.news===n.id&&x.v===-1).length,me=me0(n.id),st=a=>me===a?'border-color:var(--ac);color:var(--ac)':'';return `<div class="card p-3">${safeUrl(n.url)?`<a target="_blank" rel="noopener noreferrer" href="${esc(safeUrl(n.url))}"><b class="hd text-lg">${esc(n.t)}</b></a>`:`<b class="hd text-lg">${esc(n.t)}</b>`}<p class="text-sm mt-1" style="color:var(--mu)">${esc(n.d)}</p><div class="text-xs mt-1" style="color:var(--ac)">Fonte: ${esc(n.fonte||'ver liga')}${n.data?' · '+esc(n.data):''}</div><div class="flex gap-2 mt-2"><button class="btn2 text-sm flex-1" style="${st(1)}" onclick="vote('${esc(n.id)}',1)">Gosto (${u})</button><button class="btn2 text-sm flex-1" style="${st(-1)}" onclick="vote('${esc(n.id)}',-1)">Não gosto (${d})</button></div></div>`}).join('');
+  $('n_list').innerHTML='<div class="text-xs" style="color:var(--mu)">'+(real?'Atualizado em '+new Date(Math.max(...L.map(x=>x.ts||0))).toLocaleDateString('pt-PT'):'Resumo recolhido a 25/10/2026.')+'</div>'+L.map(n=>{const u=V.filter(x=>x.news===n.id&&x.v===1).length,d=V.filter(x=>x.news===n.id&&x.v===-1).length,me=me0(n.id),st=a=>me===a?'border-color:var(--ac);color:var(--ac)':'';return `<div class="card p-3">${safeUrl(n.url)?`<a target="_blank" rel="noopener noreferrer" href="${esc(safeUrl(n.url))}"><b class="hd text-lg">${esc(n.t)}</b></a>`:`<b class="hd text-lg">${esc(n.t)}</b>`}${n.d?`<p class="text-sm mt-1" style="color:var(--mu)">${esc(n.d)}</p>`:''}<div class="text-xs mt-1" style="color:var(--ac)">Fonte: ${esc(n.fonte||'ver liga')}${n.data?' · '+esc(n.data):''}</div><div class="flex gap-2 mt-2"><button class="btn2 text-sm flex-1" style="${st(1)}" onclick="vote('${esc(n.id)}',1)">Gosto (${u})</button><button class="btn2 text-sm flex-1" style="${st(-1)}" onclick="vote('${esc(n.id)}',-1)">Não gosto (${d})</button></div></div>`}).join('');
 }
 async function initCom(){
   if(initCom.done){if(SBMODE)sbLoad();return}initCom.done=1;
@@ -726,6 +739,14 @@ const shrinkURL=f=>new Promise((ok,no)=>{const i=new Image();i.onload=()=>{const
 async function pick(e){const f=e.target.files[0];if(!f)return;try{foto=await shrinkURL(f);$('i_prev').src=foto;$('i_prev').classList.remove('hide')}catch(x){toast('Não foi possível ler a foto')}}
 $('i_galbtn').onclick=()=>$('i_gal').click();$('i_gal').onchange=pick;
 const okImg=s=>typeof s==='string'&&/^data:image\/jpeg;base64,[A-Za-z0-9+\/=]+$/.test(s);
+// Admin apaga posts do fórum (a base de dados também só deixa o admin ou o autor).
+$('f_list').onclick=async e=>{
+  const b=e.target.closest('button[data-del]');if(!b||myRole!=='admin'||!sb)return;
+  if(!confirm('Apagar esta publicação do fórum?'))return;
+  b.disabled=true;const{error}=await sb.from('forum').delete().eq('id',b.dataset.del);
+  if(error){toast('Não foi possível apagar: '+error.message);b.disabled=false;return}
+  toast('Publicação apagada');await sbLoad();
+};
 $('f_add').onclick=async()=>{const t=$('f_txt').value.trim();if(!t)return;await addItem('forum',{txt:t});$('f_txt').value=''};
 function ago(ts){const m=Math.round((Date.now()-ts)/60000);return m<1?'agora':m<60?m+' min':m<1440?Math.round(m/60)+' h':Math.round(m/1440)+' d'}
 function drawCom(){
@@ -739,7 +760,7 @@ function drawCom(){
   }else svg='<div class="text-sm p-3" style="color:var(--mu)">Ainda sem incidentes com GPS. Use "GPS" ao reportar.</div>';
   $('mapa').innerHTML=svg;
   $('i_list').innerHTML=inc.length?inc.map(x=>`<div class="card p-3"><b>${esc(x.tipo)}</b> <span class="text-xs" style="color:var(--mu)">há ${ago(x.ts)} · ${esc(x.autor)}</span>${vipTag(x.uid)}<div class="text-sm">${esc(x.loc)}</div><div class="text-sm" style="color:var(--mu)">${esc(x.desc)}</div>${x.lat!=null?`<a class="text-sm" style="color:var(--ac)" target="_blank" rel="noopener" href="https://www.google.com/maps?q=${x.lat},${x.lon}">Abrir no mapa</a>`:''}</div>`).join(''):'<p class="text-sm text-center" style="color:var(--mu)">Sem incidentes. Reporte o primeiro.</p>';
-  $('f_list').innerHTML=fo.length?fo.map(x=>`<div class="card p-3"><b>${esc(x.autor)}</b>${vipTag(x.uid)} <span class="text-xs" style="color:var(--mu)">há ${ago(x.ts)}</span><div class="text-sm mt-1 whitespace-pre-wrap">${esc(x.txt)}</div>${okImg(x.foto)?`<img src="${x.foto}" alt="Foto do incidente" class="mt-2 rounded w-full">`:''}${x.lat!=null?`<a class="text-sm" style="color:var(--ac)" target="_blank" rel="noopener" href="https://www.google.com/maps?q=${x.lat},${x.lon}">Abrir no mapa</a>`:''}</div>`).join(''):'<p class="text-sm text-center" style="color:var(--mu)">Sem mensagens. Comece a conversa.</p>';
+  $('f_list').innerHTML=fo.length?fo.map(x=>`<div class="card p-3"><div class="flex justify-between items-start gap-2"><span><b>${esc(x.autor)}</b>${vipTag(x.uid)} <span class="text-xs" style="color:var(--mu)">há ${ago(x.ts)}</span></span>${myRole==='admin'&&x.id?`<button type="button" class="btn2 text-xs" data-del="${esc(x.id)}" style="padding:.3rem .65rem;min-height:32px">Apagar</button>`:''}</div><div class="text-sm mt-1 whitespace-pre-wrap">${esc(x.txt)}</div>${okImg(x.foto)?`<img src="${x.foto}" alt="Foto do incidente" class="mt-2 rounded w-full">`:''}${x.lat!=null?`<a class="text-sm" style="color:var(--ac)" target="_blank" rel="noopener" href="https://www.google.com/maps?q=${x.lat},${x.lon}">Abrir no mapa</a>`:''}</div>`).join(''):'<p class="text-sm text-center" style="color:var(--mu)">Sem mensagens. Comece a conversa.</p>';
   drawHome();if(myRole==='admin')drawNewsAdmin();
 }
 
@@ -802,7 +823,7 @@ const hora=iso=>new Date(iso).toLocaleTimeString('pt-PT',{hour:'2-digit',minute:
 function drawHome(){
   const c=store.get('mt_cfg',DEF),now=new Date(),tk=dkey(now);
   const first=String(c.nome||'').trim().split(/\s+/)[0];
-  $('hi').textContent=first?'Olá, '+first:'Olá';
+  $('hi').innerHTML=esc(first?'Olá, '+first:'Olá')+(myVip?' <span class="vip">⭐ VIP</span>':'');
   const today=Tarefas.doDia(tk),tt=Tarefas.total(today);
   $('h_date').textContent=now.toLocaleDateString('pt-PT',{weekday:'long',day:'numeric',month:'long'});
   $('h_n').textContent=today.length;$('h_nl').textContent=today.length===1?'tarefa':'tarefas';
@@ -1047,11 +1068,11 @@ async function pushProfile(){
 async function sbLoad(){
   try{
     const q=(t,n)=>sb.from(t).select('*').order('criado_em',{ascending:false}).limit(n);
-    const[i,f,n,v,vp]=await Promise.all([q('incidentes',100),q('forum',100),q('noticias',10),sb.from('votos').select('*'),sb.rpc('lista_vip')]);
+    const[i,f,n,v,vp]=await Promise.all([q('incidentes',100),q('forum',100),q('noticias',40),sb.from('votos').select('*'),sb.rpc('lista_vip')]);
     const T=s=>Date.parse(s);vipSet=new Set((vp&&vp.data)||[]);
     feeds.incidents=(i.data||[]).map(x=>({id:x.id,tipo:x.tipo,loc:x.local,desc:x.descricao,lat:x.lat,lon:x.lon,autor:x.autor,uid:x.user_id,ts:T(x.criado_em)}));
     feeds.forum=(f.data||[]).map(x=>({id:x.id,txt:x.texto,foto:x.foto,lat:x.lat,lon:x.lon,autor:x.autor,uid:x.user_id,ts:T(x.criado_em)}));
-    feeds.news=(n.data||[]).map(x=>({id:x.id,t:x.titulo,d:x.texto,fonte:x.fonte,data:x.data_texto,url:x.url,ts:T(x.criado_em)}));
+    feeds.news=(n.data||[]).map(x=>({id:x.id,t:x.titulo,d:x.texto,fonte:x.fonte,data:x.data_texto,url:x.url,ts:T(x.criado_em),reg:x.regiao||'pt',auto:!!x.auto}));
     feeds.votes=(v.data||[]).map(x=>({id:x.noticia_id+'_'+x.user_id,news:x.noticia_id,v:x.v}));
     $('modo').textContent='Partilhado com os técnicos (conta)';drawCom();
   }catch(e){toast('Sem ligação à base de dados')}
@@ -1072,7 +1093,7 @@ async function sbVote(nid,v){
 var myRole='tecnico',myVip=false,vipSet=new Set(),admRows=[];
 const vipTag=uid=>(vipSet&&uid&&vipSet.has(uid))?' <span class="vip">⭐ VIP</span>':'';
 function showRole(){
-  $('vipb').classList.toggle('hide',!myVip);
+  $('vipb').classList.toggle('hide',!myVip);drawHome();
   $('adm').classList.toggle('hide',myRole!=='admin');
   if(myRole==='admin'){loadAdmin();drawNewsAdmin()}else{admRows=[];$('adm_list').innerHTML='';$('nw_list').innerHTML=''}
 }
@@ -1163,7 +1184,7 @@ $('nw_go').onclick=async()=>{
   nmsg('Notícia publicada.');toast('Notícia publicada');await sbLoad();
 };
 function drawNewsAdmin(){
-  const L=(feeds.news||[]).slice(0,10);
+  const L=(feeds.news||[]).filter(n=>!n.auto).slice(0,10);
   $('nw_list').innerHTML=L.length?L.map(n=>`<div class="flex items-center justify-between gap-2 text-sm"><span class="min-w-0 truncate">${esc(n.t)}</span><button type="button" class="btn2 text-xs" data-nid="${esc(n.id)}" style="padding:.35rem .7rem">Apagar</button></div>`).join(''):'<div class="text-xs" style="color:var(--mu)">Ainda sem notícias publicadas.</div>';
 }
 $('nw_list').onclick=async e=>{
