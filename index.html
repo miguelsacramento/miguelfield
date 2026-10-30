@@ -28,6 +28,7 @@ h1,h2,.hd{font-family:'Barlow Condensed',Barlow,sans-serif}
 .inp:focus{outline:2px solid var(--ac);outline-offset:1px}
 label{font-size:.78rem;color:var(--mu);display:block;margin:.6rem 0 .2rem}
 .btn{background:var(--ac);color:var(--onac);font-weight:700;border-radius:8px;padding:.7rem 1rem}
+.env{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.25rem;padding:.6rem .3rem;font-size:.85rem}
 .btn2{background:transparent;border:1px solid var(--ln);color:var(--tx);border-radius:8px;padding:.7rem 1rem}
 .tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;min-height:56px;padding:8px 0 2px;color:var(--mu);font-size:.75rem;font-weight:500}
 .tab .ti{display:flex;align-items:center;justify-content:center;width:56px;height:30px;border-radius:999px}
@@ -157,9 +158,11 @@ button.tile{cursor:pointer}
       <label>Notas</label><textarea id="nota" rows="2" class="inp"></textarea>
       <label>Relatório</label><textarea id="rel" rows="9" class="inp" style="font-size:.82rem"></textarea>
       <button id="gen" class="btn2 w-full mt-3">Gerar relatório</button>
-      <div class="flex gap-2 mt-2">
-        <button id="tg" class="btn flex-1">Telegram</button>
-        <button id="em" class="btn flex-1">Email</button>
+      <div class="lbl mt-3 mb-1">Enviar relatório</div>
+      <div class="grid grid-cols-3 gap-2">
+        <button id="wa" class="btn env"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg><span>WhatsApp</span></button>
+        <button id="tg" class="btn env"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg><span>Telegram</span></button>
+        <button id="em" class="btn env"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><polyline points="22 6 12 13 2 6"/></svg><span>Email</span></button>
       </div>
     </div>
   </div>
@@ -278,7 +281,7 @@ button.tile{cursor:pointer}
 </section>
 </main>
 
-<footer class="text-center text-xs py-2" style="color:var(--mu);margin-bottom:84px">Criado e assinado por Miguel Sacramento · versão 30.10-a</footer>
+<footer class="text-center text-xs py-2" style="color:var(--mu);margin-bottom:84px">Criado e assinado por Miguel Sacramento · versão 30.10-b</footer>
 
 <nav aria-label="Principal" class="fixed bottom-0 inset-x-0 flex gap-1 border-t px-2" style="background:var(--sf);border-color:var(--ln);padding-bottom:calc(10px + env(safe-area-inset-bottom,0px))">
   <button class="tab on" data-v="home" aria-label="Início"><span class="ti"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>Início</button>
@@ -629,6 +632,8 @@ $('tg').onclick=async()=>{
       if(!r.ok)throw 0;finish();}catch(e){toast('Falha no envio Telegram. Verifique o Perfil.')}
   }else{window.open('https://t.me/share/url?url=%20&text='+encodeURIComponent(txt),'_blank');finish()}
 };
+// WhatsApp: abre a app (ou WhatsApp Business) com o relatório escrito; o técnico escolhe o contacto.
+$('wa').onclick=()=>{report();window.open('https://wa.me/?text='+encodeURIComponent($('rel').value),'_blank');finish()};
 $('em').onclick=async()=>{
   report();const c=store.get('mt_cfg',DEF);
   window.open(`mailto:${c.mail||''}?subject=${encodeURIComponent('Relatório '+($('wo').value||$('tipo').value))}&body=${encodeURIComponent($('rel').value)}`,'_blank');
