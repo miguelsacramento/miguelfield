@@ -62,6 +62,7 @@ button.tile{cursor:pointer}
 @media (prefers-reduced-motion:reduce){.pi::after{animation:none;background:var(--ac)}}
 .sync-ok{color:var(--ok)}.sync-no{color:var(--warn)}
 .hide{display:none!important}
+.tag{display:inline-block;font-size:.68rem;font-weight:700;padding:.05rem .45rem;border-radius:999px;border:1px solid var(--ac);color:var(--ac);vertical-align:middle;white-space:nowrap}
 .vip{display:inline-block;font-size:.68rem;font-weight:700;padding:.05rem .45rem;border-radius:999px;background:#f5c542;color:#2a1d00;vertical-align:middle;white-space:nowrap}
 :root[data-theme=light][data-op=nos]{--ac:#0b57d0;--onac:#fff}
 :root[data-theme=light][data-op=vodafone]{--ac:#e60000;--onac:#fff}
@@ -96,6 +97,8 @@ button.tile{cursor:pointer}
       <div id="h_mon" class="big" style="font-size:2.4rem;line-height:1">€ 0,00</div>
       <svg id="h_bars" viewBox="0 0 134 46" width="100%" height="46" role="img" aria-label="" style="display:block"></svg>
     </section>
+    <button type="button" id="h_eq" class="tile c2 hide" style="display:flex;align-items:center;gap:12px;min-height:64px;padding:12px 16px"><span style="font-size:1.6rem" aria-hidden="true">👷</span><span class="min-w-0" style="flex:1;text-align:left"><b class="block" style="font-size:1rem">Equipa</b><span id="h_eqs" class="block text-xs" style="color:var(--mu)">Indicadores dos seus técnicos</span></span></button>
+    <button type="button" id="h_adm" class="tile c2 hide" style="display:flex;align-items:center;gap:12px;min-height:64px;padding:12px 16px"><span style="font-size:1.6rem" aria-hidden="true">🛠️</span><span class="min-w-0" style="flex:1;text-align:left"><b class="block" style="font-size:1rem">Administração</b><span class="block text-xs" style="color:var(--mu)">Uso da app, contas, notícias e opiniões</span></span></button>
     <button type="button" id="h_com" class="tile c2" style="display:flex;align-items:center;gap:12px;min-height:64px;padding:12px 16px">
       <span id="h_cic" class="ico"></span>
       <span class="min-w-0" style="flex:1"><b id="h_ct" class="block" style="font-size:1rem">Comunidade</b><span id="h_cs" class="block text-xs" style="color:var(--mu)">Notícias, mapa e fórum</span></span>
@@ -221,6 +224,45 @@ button.tile{cursor:pointer}
   </div>
 </section>
 
+<!-- ADMINISTRAÇÃO (só o admin) -->
+<section id="v-adm" class="hide">
+  <button type="button" class="adm_back text-sm underline mb-3" style="min-height:40px;color:var(--mu)">← Início</button>
+  <div id="adm" class="card p-4 hide">
+    <h2 class="text-xl font-bold">🛠️ Administração</h2>
+    <p class="text-xs" style="color:var(--mu)">Só o admin vê esta área. A tag VIP só pode ser concedida aqui.</p>
+    <div id="uso" class="mt-3"></div>
+    <h3 class="hd text-lg font-bold mt-4">Publicar notícia</h3>
+    <label for="nw_t">Título</label><input id="nw_t" class="inp" maxlength="200">
+    <label for="nw_d">Resumo</label><textarea id="nw_d" rows="3" class="inp" maxlength="2000"></textarea>
+    <label for="nw_f">Fonte (opcional)</label><input id="nw_f" class="inp" maxlength="120" placeholder="Ex.: Anacom">
+    <label for="nw_u">Link da notícia (URL)</label><input id="nw_u" class="inp" type="url" inputmode="url" maxlength="2048" placeholder="https://...">
+    <button id="nw_go" type="button" class="btn w-full mt-3">Publicar notícia</button>
+    <div id="nw_msg" class="text-xs mt-1" style="color:var(--mu)" role="status"></div>
+    <div id="nw_list" class="mt-3 space-y-2"></div>
+    <h3 class="hd text-lg font-bold mt-4">Contas</h3>
+    <label class="flex items-start gap-2 mt-2 text-sm" style="text-transform:none;letter-spacing:0"><input id="adm_apr" type="checkbox" style="margin-top:.2rem;width:20px;height:20px;flex:none"><span>Exigir a minha aprovação para novas contas</span></label>
+    <div id="adm_pend" class="text-sm mt-2" style="color:var(--warn)" role="status"></div>
+    <input id="adm_q" class="inp mt-2" placeholder="Procurar por nome, email ou telefone">
+    <div id="adm_list" class="mt-3 space-y-2"></div>
+    <h3 class="hd text-lg font-bold mt-4">Opiniões recebidas</h3>
+    <div id="fb_list" class="mt-2 space-y-2"></div>
+  </div>
+</section>
+
+<!-- EQUIPA (empreiteiro) -->
+<section id="v-eq" class="hide">
+  <button type="button" class="adm_back text-sm underline mb-3" style="min-height:40px;color:var(--mu)">← Início</button>
+  <div class="card p-4">
+    <h2 class="text-xl font-bold">👷 Equipa</h2>
+    <div id="eq_emp" class="text-sm" style="color:var(--mu)"></div>
+    <label for="eq_q">Adicionar técnico (email ou telefone)</label>
+    <div class="flex gap-2"><input id="eq_q" class="inp flex-1" placeholder="email@exemplo.pt ou 912345678" autocomplete="off"><button id="eq_find" type="button" class="btn">Procurar</button></div>
+    <div id="eq_res" class="mt-2 space-y-2" role="status"></div>
+    <p class="text-xs mt-2" style="color:var(--mu)">O técnico recebe o pedido no Perfil e só entra na equipa se aceitar.</p>
+  </div>
+  <div id="eq_body" class="mt-3 space-y-3"></div>
+</section>
+
 <!-- CONFIG -->
 <section id="v-cfg" class="hide">
   <button id="c_ind" type="button" class="btn w-full mb-3 flex items-center justify-center gap-2"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>Indique a um técnico</button>
@@ -249,6 +291,7 @@ button.tile{cursor:pointer}
       <button id="rsave" class="btn w-full mt-3">Guardar valores</button>
     </div>
   </div>
+  <div id="eq_conv" class="card p-4 mt-4 hide"></div>
   <div id="fb" class="card p-4 mt-4">
     <h2 class="text-xl font-bold">A sua opinião</h2>
     <p class="text-xs" style="color:var(--mu)">Ajude a melhorar a app: diga o que correu mal, o que falta ou o que gostou. Não escreva dados de clientes.</p>
@@ -260,30 +303,10 @@ button.tile{cursor:pointer}
     <div id="fb_msg" class="text-xs mt-1" style="color:var(--mu)" role="status"></div>
   </div>
 
-  <div id="adm" class="card p-4 mt-4 hide">
-    <h2 class="text-xl font-bold">Administração</h2>
-    <p class="text-xs" style="color:var(--mu)">Só o admin vê esta área. A tag VIP só pode ser concedida aqui.</p>
-    <div id="uso" class="mt-3"></div>
-    <h3 class="hd text-lg font-bold mt-4">Publicar notícia</h3>
-    <label for="nw_t">Título</label><input id="nw_t" class="inp" maxlength="200">
-    <label for="nw_d">Resumo</label><textarea id="nw_d" rows="3" class="inp" maxlength="2000"></textarea>
-    <label for="nw_f">Fonte (opcional)</label><input id="nw_f" class="inp" maxlength="120" placeholder="Ex.: Anacom">
-    <label for="nw_u">Link da notícia (URL)</label><input id="nw_u" class="inp" type="url" inputmode="url" maxlength="2048" placeholder="https://...">
-    <button id="nw_go" type="button" class="btn w-full mt-3">Publicar notícia</button>
-    <div id="nw_msg" class="text-xs mt-1" style="color:var(--mu)" role="status"></div>
-    <div id="nw_list" class="mt-3 space-y-2"></div>
-    <h3 class="hd text-lg font-bold mt-4">Contas</h3>
-    <label class="flex items-start gap-2 mt-2 text-sm" style="text-transform:none;letter-spacing:0"><input id="adm_apr" type="checkbox" style="margin-top:.2rem;width:20px;height:20px;flex:none"><span>Exigir a minha aprovação para novas contas</span></label>
-    <div id="adm_pend" class="text-sm mt-2" style="color:var(--warn)" role="status"></div>
-    <input id="adm_q" class="inp mt-2" placeholder="Procurar por nome, email ou telefone">
-    <div id="adm_list" class="mt-3 space-y-2"></div>
-    <h3 class="hd text-lg font-bold mt-4">Opiniões recebidas</h3>
-    <div id="fb_list" class="mt-2 space-y-2"></div>
-  </div>
 </section>
 </main>
 
-<footer class="text-center text-xs py-2" style="color:var(--mu);margin-bottom:84px">Criado e assinado por Miguel Sacramento · versão 30.10-d</footer>
+<footer class="text-center text-xs py-2" style="color:var(--mu);margin-bottom:84px">Criado e assinado por Miguel Sacramento · versão 30.10-e</footer>
 
 <nav aria-label="Principal" class="fixed bottom-0 inset-x-0 flex gap-1 border-t px-2" style="background:var(--sf);border-color:var(--ln);padding-bottom:calc(10px + env(safe-area-inset-bottom,0px))">
   <button class="tab on" data-v="home" aria-label="Início"><span class="ti"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>Início</button>
@@ -400,15 +423,15 @@ const Tarefas={
 
 // Navegação
 function go(v){
-  const tab=v==='new'?'home':v;
+  const tab=(v==='new'||v==='adm'||v==='eq')?'home':v;
   document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('on',x.dataset.v===tab));
-  ['home','new','hist','cfg','com'].forEach(k=>$('v-'+k).classList.toggle('hide',k!==v));
-  if(v==='home')drawHome();if(v==='hist')renderHist();if(v==='com')initCom();
+  ['home','new','hist','cfg','com','adm','eq'].forEach(k=>$('v-'+k).classList.toggle('hide',k!==v));
+  if(v==='home')drawHome();if(v==='hist')renderHist();if(v==='com')initCom();if(v==='adm')loadAdmin();if(v==='eq')loadEquipa();
   window.scrollTo(0,0);
 }
 document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>go(b.dataset.v));
 $('h_new').onclick=()=>go('new');$('n_back').onclick=()=>go('home');
-$('h_com').onclick=()=>go('com');$('h_all').onclick=()=>go('hist');
+$('h_com').onclick=()=>go('com');$('h_adm').onclick=()=>go('adm');$('h_eq').onclick=()=>go('eq');document.querySelectorAll('.adm_back').forEach(b=>b.onclick=()=>go('home'));$('h_all').onclick=()=>go('hist');
 
 // Perfil
 // Indicar a app a um colega: partilha nativa do telemóvel ou, sem ela, WhatsApp.
@@ -917,7 +940,7 @@ document.querySelectorAll('.lseg').forEach(b=>b.onclick=()=>{document.querySelec
 $('ln_go').onclick=()=>{if(!$('ln_priv').checked)return lmsg('Aceite o aviso de privacidade para criar a conta.');if(!sbInit())return lmsg(SEM_LIG);sbSignUp()};
 $('li_go').onclick=()=>{if(!sbInit())return lmsg(SEM_LIG);sbSignIn()};
 $('lr_send').onclick=()=>{if(!sbInit())return lmsg(SEM_LIG);sbRecover()};
-$('c_out').onclick=()=>{if(!sbInit())return;sb.auth.signOut().then(()=>{SBMODE=false;myId=null;myRole='tecnico';myVip=false;showRole();startAuth()})};
+$('c_out').onclick=()=>{if(!sbInit())return;sb.auth.signOut().then(()=>{SBMODE=false;myId=null;myRole='tecnico';myVip=false;myCat='tecnico';showRole();startAuth()})};
 $('calcbtn').onclick=()=>{const open=$('calcbox').classList.toggle('hide')===false;$('calcbtn').setAttribute('aria-expanded',open);$('calcarrow').textContent=open?'▲ Retrair':'▼ Expandir'};
 
 // Instalar a app (ecrã inicial / favoritos)
@@ -1046,7 +1069,7 @@ async function afterLogin(u){
   try{
     const{data:p}=await sb.from('profiles').select('*').eq('id',u.id).single();
     if(p){
-      myRole=p.role||'tecnico';myVip=!!p.vip;showRole();
+      myRole=p.role||'tecnico';myVip=!!p.vip;myCat=p.categoria||'tecnico';myEmpresa=p.empresa||'';showRole();loadEqMinha();
       if(p.ativo===false){const pend=!!p.pendente,m=pend?'A sua conta foi criada e aguarda a aprovação do administrador. Volte a entrar mais tarde.':'Conta bloqueada pelo administrador.';toast(pend?'Conta a aguardar aprovação':'Conta bloqueada pelo administrador');await sb.auth.signOut();SBMODE=false;startAuth();setTimeout(()=>lmsg(m),700);return}
       const c=store.get('mt_cfg',DEF);Object.assign(c,{nome:p.nome,emp:p.empresa||c.emp,empr:p.empreiteira||'',pais:p.pais||'',mail:c.mail||p.email});_set('mt_cfg',c);loadCfg();
       const v=p.valores||{};['nos','vodafone','meo'].forEach(o=>{if(v[o]&&Object.keys(v[o]).length)_set('mt_rates_'+o,v[o])});
@@ -1063,14 +1086,15 @@ async function afterLogin(u){
 function schedPush(){if(!sb||!myId||!SBMODE)return;clearTimeout(pushT);pushT=setTimeout(pushProfile,800)}
 async function pushProfile(){
   const c=store.get('mt_cfg',DEF),valores={};['nos','vodafone','meo'].forEach(o=>valores[o]=store.get('mt_rates_'+o,{}));
+  myEmpresa=c.emp||'';
   const{error}=await sb.from('profiles').update({nome:c.nome,empresa:c.emp||'',empreiteira:c.empr||'',pais:c.pais||'',operadora:store.get('mt_op','nos'),valores}).eq('id',myId);
   if(error)toast(/duplicate|unique/i.test(error.message)?'Esse nome já está em uso por outro técnico.':'Perfil não sincronizado');
 }
 async function sbLoad(){
   try{
     const q=(t,n)=>sb.from(t).select('*').order('criado_em',{ascending:false}).limit(n);
-    const[i,f,n,v,vp]=await Promise.all([q('incidentes',100),q('forum',100),q('noticias',40),sb.from('votos').select('*'),sb.rpc('lista_vip')]);
-    const T=s=>Date.parse(s);vipSet=new Set((vp&&vp.data)||[]);
+    const[i,f,n,v,vp]=await Promise.all([q('incidentes',100),q('forum',100),q('noticias',40),sb.from('votos').select('*'),sb.rpc('lista_tags')]);
+    const T=s=>Date.parse(s);tagMap=new Map(((vp&&vp.data)||[]).map(x=>[x.id,x]));
     feeds.incidents=(i.data||[]).map(x=>({id:x.id,tipo:x.tipo,loc:x.local,desc:x.descricao,lat:x.lat,lon:x.lon,autor:x.autor,uid:x.user_id,ts:T(x.criado_em)}));
     feeds.forum=(f.data||[]).map(x=>({id:x.id,txt:x.texto,foto:x.foto,lat:x.lat,lon:x.lon,autor:x.autor,uid:x.user_id,ts:T(x.criado_em)}));
     feeds.news=(n.data||[]).map(x=>({id:x.id,t:x.titulo,d:x.texto,fonte:x.fonte,data:x.data_texto,url:x.url,ts:T(x.criado_em),reg:x.regiao||'pt',auto:!!x.auto}));
@@ -1091,16 +1115,22 @@ async function sbVote(nid,v){
   if(error){toast('Não foi possível votar');return}
   await sbLoad();
 }
-var myRole='tecnico',myVip=false,vipSet=new Set(),admRows=[];
-const vipTag=uid=>(vipSet&&uid&&vipSet.has(uid))?' <span class="vip">⭐ VIP</span>':'';
+var myRole='tecnico',myVip=false,myCat='tecnico',myEmpresa='',vipSet=new Set(),tagMap=new Map(),admRows=[];
+const CAT_TXT={tecnico:'Técnico',empreiteiro:'Empreiteiro',parceiro:'Parceiro'};
+const catTag=c=>c==='empreiteiro'?' <span class="tag">👷 Empreiteiro</span>':c==='parceiro'?' <span class="tag">🤝 Parceiro</span>':'';
+const vipTag=uid=>{const t=uid&&tagMap.get(uid);if(!t)return '';return catTag(t.categoria)+(t.vip?' <span class="vip">⭐ VIP</span>':'')};
 function showRole(){
   $('vipb').classList.toggle('hide',!myVip);drawHome();
   $('adm').classList.toggle('hide',myRole!=='admin');
+  $('h_adm').classList.toggle('hide',myRole!=='admin');
+  $('h_eq').classList.toggle('hide',myCat!=='empreiteiro');
+  if(myRole!=='admin'&&!$('v-adm').classList.contains('hide'))go('home');
+  if(myCat!=='empreiteiro'&&!$('v-eq').classList.contains('hide'))go('home');
   if(myRole==='admin'){loadAdmin();drawNewsAdmin()}else{admRows=[];$('adm_list').innerHTML='';$('nw_list').innerHTML=''}
 }
 async function loadAdmin(){
   if(!sb||myRole!=='admin')return;
-  const{data,error}=await sb.from('profiles').select('id,nome,email,telefone,role,ativo,pendente,vip,criado_em').order('criado_em',{ascending:false}).limit(500);
+  const{data,error}=await sb.from('profiles').select('id,nome,email,telefone,role,ativo,pendente,vip,categoria,criado_em').order('criado_em',{ascending:false}).limit(500);
   if(error){$('adm_list').textContent='Erro ao carregar: '+error.message;return}
   admRows=data||[];drawAdmin();loadApr();loadOpinioes();loadUso();
 }
@@ -1152,9 +1182,16 @@ function drawAdmin(){
   const q=($('adm_q').value||'').toLowerCase().trim();
   const r=admRows.filter(x=>!q||[x.nome,x.email,x.telefone].join(' ').toLowerCase().includes(q)).sort((a,b)=>(b.pendente?1:0)-(a.pendente?1:0));
   const np=admRows.filter(x=>x.pendente).length;$('adm_pend').textContent=np?np+(np===1?' conta aguarda aprovação.':' contas aguardam aprovação.'):'';
-  $('adm_list').innerHTML=r.length?r.map(x=>`<div class="card p-3"><div><b>${esc(x.nome)}</b>${x.vip?' <span class="vip">⭐ VIP</span>':''}${x.role==='admin'?' <span class="text-xs" style="color:var(--ac)">admin</span>':''}${x.pendente?' <span class="text-xs" style="color:var(--warn)">a aguardar aprovação</span>':x.ativo===false?' <span class="text-xs" style="color:#f87171">bloqueado</span>':''}</div><div class="text-xs" style="color:var(--mu)">${esc(x.email)} · ${esc(x.telefone||'sem telefone')}</div><div class="flex gap-2 mt-2"><button class="btn2 flex-1" data-a="vip" data-id="${esc(x.id)}" data-val="${x.vip?0:1}">${x.vip?'Remover VIP':'Dar VIP'}</button>${x.role==='admin'?'':`<button class="btn2 flex-1" data-a="ativo" data-id="${esc(x.id)}" data-val="${x.ativo===false?1:0}">${x.pendente?'Aprovar':x.ativo===false?'Desbloquear':'Bloquear'}</button>`}</div></div>`).join(''):'<div class="text-sm" style="color:var(--mu)">Sem contas.</div>';
+  $('adm_list').innerHTML=r.length?r.map(x=>`<div class="card p-3"><div><b>${esc(x.nome)}</b>${x.role==='admin'?'':catTag(x.categoria)}${x.vip?' <span class="vip">⭐ VIP</span>':''}${x.role==='admin'?' <span class="text-xs" style="color:var(--ac)">admin</span>':''}${x.pendente?' <span class="text-xs" style="color:var(--warn)">a aguardar aprovação</span>':x.ativo===false?' <span class="text-xs" style="color:#f87171">bloqueado</span>':''}</div><div class="text-xs" style="color:var(--mu)">${esc(x.email)} · ${esc(x.telefone||'sem telefone')}</div>${x.role==='admin'?'':`<label class="flex items-center gap-2 mt-2 text-xs" style="text-transform:none;letter-spacing:0">Categoria <select class="inp" style="flex:1;margin:0" data-cat="${esc(x.id)}">${['tecnico','empreiteiro','parceiro'].map(c=>`<option value="${c}"${(x.categoria||'tecnico')===c?' selected':''}>${CAT_TXT[c]}</option>`).join('')}</select></label>`}<div class="flex gap-2 mt-2"><button class="btn2 flex-1" data-a="vip" data-id="${esc(x.id)}" data-val="${x.vip?0:1}">${x.vip?'Remover VIP':'Dar VIP'}</button>${x.role==='admin'?'':`<button class="btn2 flex-1" data-a="ativo" data-id="${esc(x.id)}" data-val="${x.ativo===false?1:0}">${x.pendente?'Aprovar':x.ativo===false?'Desbloquear':'Bloquear'}</button>`}</div></div>`).join(''):'<div class="text-sm" style="color:var(--mu)">Sem contas.</div>';
 }
 $('adm_q').oninput=drawAdmin;
+$('adm_list').onchange=async e=>{
+  const s=e.target.closest('select[data-cat]');if(!s||myRole!=='admin'||!sb)return;
+  const c=s.value;if(c!=='empreiteiro'&&!confirm('Mudar para '+CAT_TXT[c]+'? Se era empreiteiro, a equipa dele é desfeita.')){drawAdmin();return}
+  s.disabled=true;const{error}=await sb.rpc('admin_categoria',{uid:s.dataset.cat,cat:c});
+  if(error){toast('Não foi possível: '+error.message);drawAdmin();return}
+  toast('Categoria: '+CAT_TXT[c]);await loadAdmin();sbLoad();
+};
 $('adm_list').onclick=async e=>{
   const b=e.target.closest('button[data-a]');if(!b||myRole!=='admin')return;
   const a=b.dataset.a,val=b.dataset.val==='1';
@@ -1164,6 +1201,70 @@ $('adm_list').onclick=async e=>{
   if(error){toast('Não foi possível: '+error.message);b.disabled=false;return}
   toast(a==='vip'?(val?'VIP concedido':'VIP retirado'):(val?(b.textContent==='Aprovar'?'Conta aprovada':'Conta desbloqueada'):'Conta bloqueada'));
   await loadAdmin();sbLoad();
+};
+// ---- Equipa: empreiteiro convida técnicos; o técnico aceita no Perfil ----
+async function loadEquipa(){
+  if(!sb||myCat!=='empreiteiro')return;
+  const emp=(myEmpresa||'').trim();
+  $('eq_emp').innerHTML=emp?'Empresa: <b>'+esc(emp)+'</b>':'Defina o nome da sua empresa no Perfil (campo Empresa).';
+  $('eq_body').innerHTML='<p class="text-sm" style="color:var(--mu)">A carregar...</p>';
+  const{data,error}=await sb.rpc('equipa_painel',{dias:30});
+  if(error||!data){$('eq_body').innerHTML='<p class="text-sm" style="color:var(--warn)">Não foi possível carregar a equipa.</p>';return}
+  drawEquipa(data);
+}
+function drawEquipa(d){
+  const T=d.tecnicos||[],A=T.filter(x=>x.estado==='aceite'),L=d.lista||[],PT=d.por_tipo||[];
+  $('h_eqs').textContent=A.length?A.length+(A.length===1?' técnico':' técnicos')+' · '+(+d.tarefas||0)+' tarefas em '+(+d.dias||30)+' dias':'Indicadores dos seus técnicos';
+  const tile=(n,t)=>`<div class="card p-3"><div class="big" style="font-size:1.6rem;line-height:1">${n}</div><div class="text-xs mt-1" style="color:var(--mu)">${t}</div></div>`;
+  const dt=s=>{const x=new Date(s);return pad(x.getDate())+'/'+pad(x.getMonth()+1)+' '+pad(x.getHours())+':'+pad(x.getMinutes())};
+  $('eq_body').innerHTML=!T.length?'<div class="card p-4 text-sm" style="color:var(--mu)">Ainda não tem técnicos. Procure-os acima pelo email ou telefone.</div>':
+  `<div class="grid grid-cols-2 gap-2">${tile(A.length,'técnicos na equipa')}${tile(+d.hoje||0,'tarefas hoje')}${tile(+d.tarefas||0,'tarefas em '+(+d.dias||30)+' dias')}${tile(eur(+d.valor||0),'valor em '+(+d.dias||30)+' dias')}</div>
+  ${PT.length?`<div class="card p-3"><h3 class="hd text-lg font-bold">Por tipo</h3>${PT.map(x=>`<div class="flex justify-between gap-2 text-sm"><span class="min-w-0 truncate">${esc(x.tipo)}</span><span style="white-space:nowrap">${+x.n||0} · ${eur(+x.valor||0)}</span></div>`).join('')}</div>`:''}
+  <div class="card p-3"><h3 class="hd text-lg font-bold">Técnicos</h3><div class="space-y-2 mt-1">${T.map(x=>`<div class="flex justify-between gap-2 text-sm"><span class="min-w-0"><b>${esc(x.nome)}</b><span class="block text-xs" style="color:var(--mu)">${x.estado==='aceite'?(x.ultima_entrada?'última entrada há '+ago(Date.parse(x.ultima_entrada)):'nunca entrou'):'aguarda resposta ao convite'}</span></span><span class="text-xs text-right" style="white-space:nowrap">${x.estado==='aceite'?`${+x.tarefas||0} tarefas · ${+x.dias_ativos||0} dias<span class="block">${eur(+x.valor||0)}</span>`:''}<button type="button" class="btn2 text-xs mt-1" data-rem="${esc(x.id)}" style="padding:.25rem .6rem;min-height:30px">${x.estado==='aceite'?'Remover':'Cancelar'}</button></span></div>`).join('')}</div></div>
+  <div class="card p-3"><h3 class="hd text-lg font-bold">Tarefas (${+d.dias||30} dias)</h3><p class="text-xs" style="color:var(--mu)">Sem dados de clientes.</p><div class="space-y-1 mt-1">${L.length?L.slice(0,100).map(x=>`<div class="flex justify-between gap-2 text-sm" style="border-top:1px solid var(--ln);padding-top:.35rem"><span class="min-w-0"><b>${esc(x.tecnico)}</b> · ${esc(x.tipo)}<span class="block text-xs" style="color:var(--mu)">${x.wo?(/^wo/i.test(x.wo)?'':'WO ')+esc(x.wo)+' · ':''}${esc(String(x.operadora||'').toUpperCase())} · ${dt(x.feita_em)}</span></span><span style="white-space:nowrap">${eur(+x.valor||0)}</span></div>`).join(''):'<p class="text-sm" style="color:var(--mu)">Sem tarefas neste período.</p>'}</div></div>`;
+}
+$('eq_find').onclick=async()=>{
+  const q=$('eq_q').value.trim();if(!sb||myCat!=='empreiteiro')return;
+  if(q.length<5){$('eq_res').innerHTML='<p class="text-xs" style="color:var(--warn)">Escreva o email ou o telefone completo.</p>';return}
+  $('eq_res').innerHTML='<p class="text-xs" style="color:var(--mu)">A procurar...</p>';
+  const{data,error}=await sb.rpc('equipa_procurar',{q:q});
+  if(error){$('eq_res').innerHTML='<p class="text-xs" style="color:var(--warn)">Não foi possível procurar.</p>';return}
+  const R=data||[],J={pendente:'Convite enviado',aceite:'Já está na equipa'};
+  $('eq_res').innerHTML=R.length?R.map(x=>`<div class="flex justify-between items-center gap-2 text-sm"><span class="min-w-0"><b>${esc(x.nome)}</b>${x.empresa?' <span class="text-xs" style="color:var(--mu)">'+esc(x.empresa)+'</span>':''}</span>${J[x.ja]?`<span class="text-xs" style="color:var(--mu)">${J[x.ja]}</span>`:`<button type="button" class="btn text-xs" data-inv="${esc(x.id)}" style="padding:.35rem .8rem;min-height:34px">Convidar</button>`}</div>`).join(''):'<p class="text-xs" style="color:var(--mu)">Nenhum técnico com esse email ou telefone. Confirme que ele já criou conta na app.</p>';
+};
+$('eq_q').onkeydown=e=>{if(e.key==='Enter')$('eq_find').click()};
+$('eq_res').onclick=async e=>{
+  const b=e.target.closest('button[data-inv]');if(!b||!sb)return;
+  b.disabled=true;const{error}=await sb.rpc('equipa_convidar',{tec:b.dataset.inv});
+  if(error){toast('Não foi possível convidar: '+error.message);b.disabled=false;return}
+  b.outerHTML='<span class="text-xs" style="color:var(--ok)">Convite enviado</span>';toast('Convite enviado');loadEquipa();
+};
+$('eq_body').onclick=async e=>{
+  const b=e.target.closest('button[data-rem]');if(!b||!sb)return;
+  if(!confirm('Tirar este técnico da equipa? Deixa de ver as tarefas dele.'))return;
+  b.disabled=true;const{error}=await sb.rpc('equipa_sair',{outro:b.dataset.rem});
+  if(error){toast('Não foi possível: '+error.message);b.disabled=false;return}
+  toast('Técnico removido da equipa');loadEquipa();
+};
+// Técnico: convites recebidos e equipa atual (no Perfil)
+async function loadEqMinha(){
+  if(!sb||!SBMODE)return;
+  const{data,error}=await sb.rpc('equipa_minha');
+  const R=(!error&&data)||[];
+  $('eq_conv').classList.toggle('hide',!R.length);if(!R.length){$('eq_conv').innerHTML='';return}
+  const nm=x=>esc(x.empresa||x.nome)+(x.empresa?' <span class="text-xs" style="color:var(--mu)">('+esc(x.nome)+')</span>':'');
+  $('eq_conv').innerHTML=`<h2 class="text-xl font-bold">👷 Equipa</h2>${R.map(x=>x.estado==='aceite'
+    ?`<div class="mt-2 text-sm">Faz parte da equipa de <b>${nm(x)}</b>.</div><button type="button" class="btn2 w-full mt-2" data-sair="${esc(x.empreiteiro_id)}">Sair da equipa</button>`
+    :`<div class="mt-2 text-sm"><b>${nm(x)}</b> convidou-o para a equipa.</div><div class="flex gap-2 mt-2"><button type="button" class="btn flex-1" data-ace="1" data-emp="${esc(x.empreiteiro_id)}">Aceitar</button><button type="button" class="btn2 flex-1" data-ace="0" data-emp="${esc(x.empreiteiro_id)}">Recusar</button></div>`).join('')}
+  <p class="text-xs mt-2" style="color:var(--mu)">Na equipa, o empreiteiro vê as suas tarefas (tipo, WO, operadora, valor e data), sem dados de clientes. Pode sair quando quiser.</p>`;
+}
+$('eq_conv').onclick=async e=>{
+  const a=e.target.closest('button[data-ace]'),s=e.target.closest('button[data-sair]');if(!sb||(!a&&!s))return;
+  if(s&&!confirm('Sair da equipa? O empreiteiro deixa de ver as suas tarefas.'))return;
+  (a||s).disabled=true;
+  const{error}=a?await sb.rpc('equipa_responder',{emp:a.dataset.emp,aceitar:a.dataset.ace==='1'}):await sb.rpc('equipa_sair',{outro:s.dataset.sair});
+  if(error){toast(/já está numa equipa/.test(error.message)?'Já está numa equipa. Saia dela primeiro.':'Não foi possível: '+error.message);(a||s).disabled=false;return}
+  toast(a?(a.dataset.ace==='1'?'Entrou na equipa':'Convite recusado'):'Saiu da equipa');loadEqMinha();
 };
 // ---- Admin: painel de uso do piloto (dados da função admin_uso, só para o admin) ----
 async function loadUso(){
