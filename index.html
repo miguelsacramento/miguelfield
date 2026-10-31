@@ -149,16 +149,26 @@ button.tile{cursor:pointer}
       <details class="mt-2"><summary class="text-xs cursor-pointer" style="color:var(--mu)">Texto lido pelo OCR (para diagnóstico)</summary><pre id="mtxt" class="text-xs whitespace-pre-wrap mt-1" style="color:var(--mu)"></pre></details>
     </div>
 
+    <div id="recbox" class="card p-4 mt-4">
+      <h2 class="text-xl font-bold">Equipamentos recolhidos</h2>
+      <p class="text-xs mt-1" style="color:var(--mu)">Carregue aqui os prints da aba Recolha. Tudo o que for lido neste cartão fica nos recolhidos. Confira antes de enviar.</p>
+      <input id="rfiles" type="file" accept="image/*" multiple class="hide">
+      <button id="rup" type="button" class="btn2 w-full mt-3">Ler print de recolha</button>
+      <div id="rthumbs" class="flex gap-2 flex-wrap mt-3"></div>
+      <div id="rprog" class="hide mt-3 text-sm" style="color:var(--ac)" role="status" aria-live="polite"></div>
+      <label for="rec">Recolhidos (um por linha, com SN)</label><textarea id="rec" rows="3" class="inp"></textarea><button type="button" class="btn2 text-sm w-full mt-1" onclick="scan('rec')">Ler código de barras</button>
+      <details class="mt-2"><summary class="text-xs cursor-pointer" style="color:var(--mu)">Texto lido pelo OCR (para diagnóstico)</summary><pre id="rtxt" class="text-xs whitespace-pre-wrap mt-1" style="color:var(--mu)"></pre></details>
+    </div>
+
     <div id="form" class="card p-4 mt-4 hide">
       <h2 class="text-xl font-bold">Resumo para conferir</h2>
       <details class="mt-2"><summary class="text-xs cursor-pointer" style="color:var(--mu)">Texto lido pelo OCR (para diagnóstico)</summary><pre id="ocrtxt" class="text-xs whitespace-pre-wrap mt-1" style="color:var(--mu)"></pre></details>
-      <label>WO / OT</label><input id="wo" class="inp"><div id="wo_hint" class="text-xs mt-1" style="color:var(--ac)"></div><div id="ia_aviso" class="text-xs mt-1" style="color:var(--warn)"></div>
+      <label>WO / OT</label><input id="wo" class="inp"><div id="wo_hint" class="text-xs mt-1" style="color:var(--ac)"></div><div id="ia_aviso" class="text-xs mt-1" style="color:var(--warn)"></div><div id="tipo_sug" class="hide text-xs mt-1" style="color:var(--ac)"></div>
       <label id="lbl_conta">Conta de serviço</label><input id="conta" class="inp">
       <label>Cliente</label><input id="cli" class="inp">
       <label>Contacto</label><input id="tel" class="inp" inputmode="tel">
       <label>Morada</label><textarea id="mor" rows="2" class="inp"></textarea>
       <label>Equipamentos instalados (um por linha, com SN)</label><textarea id="inst" rows="3" class="inp"></textarea><button class="btn2 text-sm w-full mt-1" onclick="scan('inst')">Ler código de barras</button>
-      <label>Equipamentos recolhidos (um por linha, com SN)</label><textarea id="rec" rows="3" class="inp"></textarea><button class="btn2 text-sm w-full mt-1" onclick="scan('rec')">Ler código de barras</button>
       <label>Notas</label><textarea id="nota" rows="2" class="inp"></textarea>
       <label>Relatório</label><textarea id="rel" rows="9" class="inp" style="font-size:.82rem"></textarea>
       <button id="gen" class="btn2 w-full mt-3">Gerar relatório</button>
@@ -319,7 +329,7 @@ button.tile{cursor:pointer}
 </section>
 </main>
 
-<footer class="text-center text-xs py-2" style="color:var(--mu);margin-bottom:84px">Criado e assinado por Miguel Sacramento · versão 30.10-h</footer>
+<footer class="text-center text-xs py-2" style="color:var(--mu);margin-bottom:84px">Criado e assinado por Miguel Sacramento · versão 31.10-a</footer>
 
 <nav aria-label="Principal" class="fixed bottom-0 inset-x-0 flex gap-1 border-t px-2" style="background:var(--sf);border-color:var(--ln);padding-bottom:calc(10px + env(safe-area-inset-bottom,0px))">
   <button class="tab on" data-v="home" aria-label="Início"><span class="ti"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>Início</button>
@@ -472,19 +482,25 @@ function progShow(id,pct,extra){
 // Comentários/observações lidos dos prints → notas
 function parseComments(t){
   const rows=String(t||'').split(/\r?\n/).map(r=>r.replace(/\s+/g,' ').trim());
-  const LBL=/^(?:coment[áa]rios?(?:\s+(?:do|da)\s+\w+)?|observa[çc][õo]es|observa[çc][ãa]o|obs\.?|notas?(?:\s+(?:do|da)\s+\w+)?|descri[çc][ãa]o\s+do\s+problema|motivo)\s*(?:[:\-–]\s*|$)(.*)$/i;
+  // Títulos de comentários. Motivo e causas guardam o título no texto (ex.: "Motivo de recolha: sem avaria").
+  const LBL=/^(coment[áa]rios?(?:\s+(?:do|da|de)\s+\w+)?|observa[çc](?:[õo]es|[ãa]o)(?:\s+(?:do|da|de)\s+\w+)?|obs\.?|notas?(?:\s+(?:do|da|de)\s+\w+)?|descri[çc][ãa]o\s+do\s+problema|motivo(?:\s+d[aeo]\s+\w+)?|causas?\s+da\s+avaria(?:\s+do\s+equipamento)?)\s*(?:[:\-–]\s*|$)(.*)$/i;
+  const COM_TITULO=/^(motivo|causa)/i;
   const NEXT=/^[A-ZÀ-Ú][\wÀ-ú ./]{1,28}\s*:\s*\S/;
+  const FIM=/^(?:guardar|cancelar|confirmar|voltar|fechar|validar\b.*|indispon[ií]vel|estado\s*:.*|home\b.*|abrir mapa)$/i;
   const out=[],seen=new Set();
   for(let i=0;i<rows.length;i++){
     const m=rows[i].match(LBL);if(!m)continue;
-    const parts=[];if(m[1]&&m[1].trim())parts.push(m[1].trim());
-    for(let j=i+1;j<rows.length&&parts.length<5;j++){
-      const r=rows[j];if(!r||NEXT.test(r)||LBL.test(r)||r.length>240)break;
-      if(/^(?:guardar|cancelar|confirmar|voltar|fechar)$/i.test(r))break;
+    const parts=[];if(m[2]&&m[2].trim())parts.push(m[2].trim());
+    // O OCR costuma deixar 1 ou 2 linhas em branco entre o título e o texto: salta-as antes de começar.
+    let j=i+1;if(!parts.length)while(j<rows.length&&!rows[j]&&j<i+3)j++;
+    for(;j<rows.length&&parts.length<5;j++){
+      const r=rows[j];if(!r||NEXT.test(r)||LBL.test(r)||r.length>240||FIM.test(r))break;
       parts.push(r);i=j;
     }
-    const txt=parts.join(' ').replace(/^[\s\-–:]+/,'').trim();
-    if(txt.length>=3&&/[A-Za-zÀ-ú]{3}/.test(txt)&&!seen.has(txt.toLowerCase())){seen.add(txt.toLowerCase());out.push(txt)}
+    let txt=parts.join(' ').replace(/^[\s\-–:]+/,'').trim();
+    if(!(txt.length>=3&&/[A-Za-zÀ-ú]{3}/.test(txt)))continue;
+    if(COM_TITULO.test(m[1])){const l=m[1].toLowerCase();txt=l.charAt(0).toUpperCase()+l.slice(1)+': '+txt}
+    if(!seen.has(txt.toLowerCase())){seen.add(txt.toLowerCase());out.push(txt)}
   }
   return out;
 }
@@ -501,7 +517,7 @@ $('up').onclick=()=>$('files').click();
 $('files').onchange=async e=>{
   const fs=[...e.target.files];if(!fs.length)return;
   $('thumbs').innerHTML='';fs.forEach(f=>{const i=new Image();i.src=URL.createObjectURL(f);i.className='h-16 rounded border';i.style.borderColor='var(--ln)';$('thumbs').appendChild(i)});
-  texts=[];$('ia_aviso').textContent='';
+  texts=[];$('ia_aviso').textContent='';sugerirTipo('');
   // OCR no telemóvel e, se ligada no Perfil, leitura com IA ao mesmo tempo.
   const pIA=LeitorPrints.ia(fs);
   const pOCR=LeitorPrints.ocr(fs,'prog').then(r=>{if(LeitorPrints.iaLigada())progShow('prog',null,'(a IA está a ler os prints)');return r});
@@ -514,11 +530,40 @@ $('files').onchange=async e=>{
     let d=LeitorPrints.wo(texts,pmode);
     if(campos)d=LeitorPrints.juntarIA(d,campos,texts);
     fill(d);addNota(d.notas);drawModes();
-    const tp=escolherTipo(d.tipo,tiposOp());if(tp){$('tipo').value=tp;report()}
+    sugerirTipo(escolherTipo(d.tipo,tiposOp()));
     if(d.mat&&d.mat.length){const it=parseMaterial(d.mat.join('\n')),L=it.length?it:d.mat,cur=$('mat').value.split('\n').map(x=>x.trim()).filter(Boolean),have=new Set(cur.map(x=>x.toLowerCase()));$('mat').value=cur.concat(L.filter(x=>!have.has(x.toLowerCase()))).join('\n');report()}
     if(d.conferir&&d.conferir.length)$('ia_aviso').textContent='Confira estes SN (a IA leu, o OCR não confirmou): '+d.conferir.join(', ');
     $('prog').classList.add('hide');
   }catch(err){$('prog').textContent='O OCR não consegue carregar aqui (ficheiros de idioma bloqueados). Descarregue o ficheiro HTML e abra-o no telemóvel/PC, ou preencha os campos abaixo manualmente.';showForm();report()}
+};
+// ===== Cartão de recolha (separado, como os materiais) =====
+// O que é lido aqui é sempre recolhido: junta-se aos recolhidos e sai dos instalados (mesmo SN).
+var recCard=[];
+const snDe=x=>String((String(x).match(/SN:\s*(\S+)/i)||[,x])[1]).toUpperCase().replace(/[^A-Z0-9]/g,'');
+const linhas=v=>String(v||'').split('\n').map(x=>x.trim()).filter(Boolean);
+function aplicarRecolha(){
+  if(!recCard.length)return;
+  const sns=new Set(recCard.map(snDe)),cur=linhas($('rec').value),have=new Set(cur.map(snDe));
+  $('rec').value=cur.concat(recCard.filter(x=>!have.has(snDe(x)))).join('\n');
+  $('inst').value=linhas($('inst').value).filter(x=>!sns.has(snDe(x))).join('\n');
+}
+$('rup').onclick=()=>$('rfiles').click();
+$('rfiles').onchange=async e=>{
+  const fs=[...e.target.files];if(!fs.length)return;
+  $('rthumbs').innerHTML='';fs.forEach(f=>{const i=new Image();i.src=URL.createObjectURL(f);i.className='h-16 rounded border';i.style.borderColor='var(--ln)';$('rthumbs').appendChild(i)});
+  const pIA=LeitorPrints.ia(fs);
+  const pOCR=LeitorPrints.ocr(fs,'rprog').then(r=>{if(LeitorPrints.iaLigada())progShow('rprog',null,'(a IA está a ler os prints)');return r});
+  const [o,ia]=await Promise.allSettled([pOCR,pIA]);
+  const campos=ia.status==='fulfilled'?ia.value:null,tx=o.status==='fulfilled'?o.value:[];
+  $('rtxt').textContent=tx.join('\n---\n');
+  const pelaIA=campos?[...(campos.inst||[]),...(campos.rec||[])].map(x=>String(x).trim()).filter(Boolean):[];
+  const pelaOCR=tx.length?linhas(parseAll(tx,tx.map(()=>'rec')).rec):[];
+  const novos=pelaIA.length?pelaIA:pelaOCR;
+  $('rprog').classList.add('hide');e.target.value='';
+  addNota([...((campos&&campos.notas)||[]),...parseComments(tx.join('\n'))]);
+  if(!novos.length){toast('Não encontrei equipamentos no print. Escreva-os à mão ou use o código de barras.');return}
+  const have=new Set(recCard.map(snDe));recCard=recCard.concat(novos.filter(x=>!have.has(snDe(x))));
+  aplicarRecolha();report();toast('Recolha lida. Confira os equipamentos.');
 };
 // ===== Leitor de prints =====
 // Recebe prints e devolve os campos lidos. Não mexe no formulário: quem chama decide o que fazer com o resultado.
@@ -574,7 +619,7 @@ Morada: Rua das Flores 25, 3º Esq, 2745-123 Queluz
 Instalado: ONT Huawei HG8010H SN: 48575443A1B2C3D4
 Instalado: Box TV UIW4020 SN: UIW402012345678
 Recolhido: Router Thomson TG789 SN: CP1234ZXY89`;
-$('demo').onclick=()=>{$('wo_hint').textContent='';texts=[];pmode=[];$('pmodes').innerHTML='';$('thumbs').innerHTML='';$('prog').classList.add('hide');['wo','conta','cli','tel','mor','inst','rec','nota'].forEach(k=>$(k).value='');showForm();report();$('wo').focus();$('form').scrollIntoView({behavior:'smooth'})};
+$('demo').onclick=()=>{$('wo_hint').textContent='';texts=[];pmode=[];$('pmodes').innerHTML='';$('thumbs').innerHTML='';$('prog').classList.add('hide');['wo','conta','cli','tel','mor','inst','rec','nota'].forEach(k=>$(k).value='');aplicarRecolha();showForm();report();$('wo').focus();$('form').scrollIntoView({behavior:'smooth'})};
 
 var pmode=[];
 function parseAll(texts,pmode){
@@ -590,7 +635,7 @@ function parseAll(texts,pmode){
 function drawModes(){
   const el=$('pmodes');
   el.innerHTML=texts.length?'<div class="text-xs mt-2" style="color:var(--mu)">Tipo de cada print (separa instalados de recolhidos):</div><div class="flex gap-2 flex-wrap mt-1">'+texts.map((t,i)=>`<span class="text-xs">Print ${i+1} <select class="inp pm" data-i="${i}" style="width:auto;padding:.25rem .4rem"><option value="auto">Auto</option><option value="ent">Entrega</option><option value="rec">Recolha</option></select></span>`).join('')+'</div>':'';
-  el.querySelectorAll('.pm').forEach(x=>{x.value=pmode[+x.dataset.i]||'auto';x.onchange=()=>{pmode[+x.dataset.i]=x.value;const d=LeitorPrints.wo(texts,pmode);$('inst').value=d.inst;$('rec').value=d.rec;report()}});
+  el.querySelectorAll('.pm').forEach(x=>{x.value=pmode[+x.dataset.i]||'auto';x.onchange=()=>{pmode[+x.dataset.i]=x.value;const d=LeitorPrints.wo(texts,pmode);$('inst').value=d.inst;$('rec').value=d.rec;aplicarRecolha();report()}});
 }
 function woList(t){const re=/\b(?:W[O0]|[O0]T|Ordem[^:\n]*)\s*[:#-]?\s*([A-Z]{0,3}-?\d[\w-]{4,})/gi,c={},o=[];let m;while((m=re.exec(t))){const v=m[1].toUpperCase();if(!(v in c)){c[v]=0;o.push(v)}c[v]++}o.sort((a,b)=>c[b]-c[a]);return o}
 // Limpa o nome de um equipamento: corta a partir da primeira palavra só em minúsculas (texto de avisos colado pelo OCR).
@@ -636,11 +681,20 @@ function parse(t){
     tel:g(/(?:Telem[óo]vel|Contacto|Tel\w*)\s*:\s*([\d +]{9,})/i)||g(/\b([239]\d{2}\s?\d{3}\s?\d{3})\b/),
     mor:mor,inst:inst.join('\n'),rec:rec.join('\n')};
 }
+// O tipo é escolhido pelo técnico antes de abrir a tarefa. O print nunca o muda: se indicar outro, só sugere.
+function sugerirTipo(tp){
+  const el=$('tipo_sug');
+  if(!tp||tp===$('tipo').value){el.classList.add('hide');el.innerHTML='';return}
+  el.innerHTML=`O print indica <b>${esc(tp)}</b>. <button type="button" class="btn2 text-xs" style="padding:.2rem .6rem;min-height:30px">Usar este tipo</button>`;
+  el.classList.remove('hide');
+  el.querySelector('button').onclick=()=>{$('tipo').value=tp;el.classList.add('hide');report()};
+}
 function showForm(){$('form').classList.remove('hide')}
+$('tipo').addEventListener('change',()=>sugerirTipo(''));
 function fill(d){
   $('wo_hint').textContent=d.woAlt&&d.woAlt.length?'Também lida como: '+d.woAlt.join(', ')+'. Confirme a WO.':'';
   ['wo','conta','cli','tel','mor','inst','rec'].forEach(k=>$(k).value=d[k]||'');
-  showForm();report();toast('Dados extraídos. Confira os campos.');
+  aplicarRecolha();showForm();report();toast('Dados extraídos. Confira os campos.');
   $('form').scrollIntoView({behavior:'smooth'});
 }
 function report(){
@@ -669,6 +723,7 @@ function finish(){
   Tarefas.guardar({id:Date.now(),valor:rate($('tipo').value),op:store.get('mt_op','nos'),tipo:$('tipo').value,wo:$('wo').value,cli:$('cli').value,mor:$('mor').value,mat:$('mat').value.trim(),nota:$('nota').value.trim(),txt:$('rel').value,data:new Date().toISOString()});
   ['wo','conta','cli','tel','mor','inst','rec','mat','nota','rel'].forEach(k=>$(k).value='');
   $('thumbs').innerHTML='';$('mthumbs').innerHTML='';$('mtxt').textContent='';$('mprog').classList.add('hide');$('files').value='';texts=[];
+  recCard=[];$('rthumbs').innerHTML='';$('rtxt').textContent='';$('rprog').classList.add('hide');sugerirTipo('');
   $('form').classList.add('hide');$('work').classList.add('hide');$('abrir').innerHTML='Abrir Nova Tarefa';
   toast('Enviado e guardado no histórico');go('home');
 }
@@ -1019,10 +1074,20 @@ function sbInit(){
     sb.auth.onAuthStateChange(ev=>{if(ev==='PASSWORD_RECOVERY'){const p=prompt('Nova password (mínimo 8 caracteres):');if(p&&p.length>=8)sb.auth.updateUser({password:p}).then(r=>toast(r.error?'Erro: '+r.error.message:'Password alterada'));else toast('A password precisa de pelo menos 8 caracteres')}})}}catch(e){sb=null}
   return sb;
 }
+// Link do email expirado ou já usado: o Supabase volta para a app com o erro no endereço.
+function erroDoLink(){
+  const h=new URLSearchParams(String(location.hash||'').replace(/^#/,''));
+  if(!h.get('error_code')&&!h.get('error'))return '';
+  try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}
+  return /expired|otp/i.test((h.get('error_code')||'')+(h.get('error_description')||''))
+    ?'O link de confirmação expirou ou já foi usado. Se já o abriu antes, a conta está confirmada: tente entrar com o email e a password. A conta pode ainda aguardar a aprovação do administrador.'
+    :'Não foi possível confirmar pelo link. Tente entrar com o email e a password.';
+}
+var linkMsg=erroDoLink();
 function startAuth(){
   if(!sbInit()){$('login').classList.remove('hide');lmsg(SEM_LIG);return}
   const on=true;
-  sb.auth.getSession().then(({data})=>{const ok=!!(data&&data.session);$('login').classList.toggle('hide',!on||ok);if(ok)afterLogin(data.session.user);else{lockTick();legacyPrefill()}maybeOnb()}).catch(()=>{$('login').classList.toggle('hide',!on);maybeOnb()});
+  sb.auth.getSession().then(({data})=>{const ok=!!(data&&data.session);$('login').classList.toggle('hide',!on||ok);if(ok)afterLogin(data.session.user);else{lockTick();legacyPrefill();if(linkMsg){lmsg(linkMsg);linkMsg=''}}maybeOnb()}).catch(()=>{$('login').classList.toggle('hide',!on);maybeOnb()});
 }
 function legacyInfo(){
   const us=store.get('mt_users',[]),h=Tarefas.todas(),c=store.get('mt_cfg',DEF),u=us[0]||null;
@@ -1046,12 +1111,19 @@ async function sbSignUp(){
   if(!/^\d{9,15}$/.test(tel))return lmsg('Telefone inválido (9 a 15 dígitos).');
   if(p.length<8)return lmsg('A password precisa de pelo menos 8 caracteres.');
   if(p!==$('ln_c').value)return lmsg('As passwords não coincidem.');
+  const b=$('ln_go');if(b.disabled)return;b.disabled=true;
+  const solta=s=>setTimeout(()=>{b.disabled=false},s*1000);
   lmsg('A criar conta...');
   const{data,error}=await sb.auth.signUp({email:e,password:p,options:{data:{nome:n,telefone:tel},emailRedirectTo:location.origin+location.pathname}});
-  if(error)return lmsg(/database|already|duplicate/i.test(error.message)?'Nome, email ou telefone já está em uso (ou dados inválidos).':'Erro: '+error.message);
-  if(data.user&&data.user.identities&&!data.user.identities.length)return lmsg('Esse email já está registado.');
-  if(!data.session)return lmsg('Conta criada. Confirme o email enviado para '+e+' e depois entre. A conta pode ainda precisar da aprovação do administrador.');
-  startAuth();
+  const ESPERA='Depois de confirmar, a conta fica a aguardar a aprovação do administrador. Quando estiver aprovada, entre com o email e a password.';
+  if(error){
+    // 429: o primeiro pedido já criou a conta e enviou o email; o segundo toque é recusado pelo Supabase.
+    if(error.status===429||/rate_limit|security purposes|only request this/i.test((error.code||'')+' '+error.message)){solta(60);return lmsg('O pedido de conta já foi recebido. Veja o seu email (e a pasta de spam) e abra o link de confirmação. '+ESPERA)}
+    solta(0);return lmsg(/database|already|duplicate/i.test(error.message)?'Nome, email ou telefone já está em uso (ou dados inválidos).':'Erro: '+error.message);
+  }
+  if(data.user&&data.user.identities&&!data.user.identities.length){solta(0);return lmsg('Esse email já está registado.')}
+  if(!data.session){solta(60);return lmsg('✅ Conta criada para '+e+'. Abra o email de confirmação que enviámos (veja também o spam). '+ESPERA)}
+  b.disabled=false;startAuth();
 }
 var LOCK_KEY='mt_lock',LOCK_MAX=3,LOCK_SEC=30,lockT=null;
 function lockGet(){try{return JSON.parse(localStorage.getItem(LOCK_KEY)||'{}')}catch(e){return{}}}
@@ -1066,6 +1138,7 @@ async function sbSignIn(){
   if(lockLeft()>0)return lockTick();
   const e=norm($('li_u').value);if(!e.includes('@'))return lmsg('Entre com o email da conta.');
   const{error}=await sb.auth.signInWithPassword({email:e,password:$('li_p').value});
+  if(error&&/not confirmed/i.test(error.message||'')||error&&error.code==='email_not_confirmed')return lmsg('Ainda não confirmou o email. Abra o link que enviámos (veja também o spam) e depois entre.');
   if(error){
     const s=lockGet(),n=(s.n||0)+1;
     if(n>=LOCK_MAX){lockSet({n:0,until:Date.now()+LOCK_SEC*1000});return lockTick()}
@@ -1085,8 +1158,9 @@ async function afterLogin(u){
   try{
     const{data:p}=await sb.from('profiles').select('*').eq('id',u.id).single();
     if(p){
-      myRole=p.role||'tecnico';myVip=!!p.vip;myCat=p.categoria||'tecnico';myEmpresa=p.empresa||'';showRole();loadEqMinha();loadMsgs();
+      myRole=p.role||'tecnico';myVip=!!p.vip;myCat=p.categoria||'tecnico';myEmpresa=p.empresa||'';showRole();
       if(p.ativo===false){const pend=!!p.pendente,m=pend?'A sua conta foi criada e aguarda a aprovação do administrador. Volte a entrar mais tarde.':'Conta bloqueada pelo administrador.';toast(pend?'Conta a aguardar aprovação':'Conta bloqueada pelo administrador');await sb.auth.signOut();SBMODE=false;startAuth();setTimeout(()=>lmsg(m),700);return}
+      loadEqMinha();loadMsgs();
       const c=store.get('mt_cfg',DEF);Object.assign(c,{nome:p.nome,emp:p.empresa||c.emp,empr:p.empreiteira||'',pais:p.pais||'',mail:c.mail||p.email});_set('mt_cfg',c);loadCfg();
       const v=p.valores||{};['nos','vodafone','meo'].forEach(o=>{if(v[o]&&Object.keys(v[o]).length)_set('mt_rates_'+o,v[o])});
       if(p.operadora&&p.operadora!==store.get('mt_op','nos'))applyOp(p.operadora);else renderRates();
