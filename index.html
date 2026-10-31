@@ -329,7 +329,7 @@ button.tile{cursor:pointer}
 </section>
 </main>
 
-<footer class="text-center text-xs py-2" style="color:var(--mu);margin-bottom:84px">Criado e assinado por Miguel Sacramento · versão 31.10-a</footer>
+<footer class="text-center text-xs py-2" style="color:var(--mu);margin-bottom:84px">Criado e assinado por Miguel Sacramento · versão 31.10-b</footer>
 
 <nav aria-label="Principal" class="fixed bottom-0 inset-x-0 flex gap-1 border-t px-2" style="background:var(--sf);border-color:var(--ln);padding-bottom:calc(10px + env(safe-area-inset-bottom,0px))">
   <button class="tab on" data-v="home" aria-label="Início"><span class="ti"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>Início</button>
@@ -346,7 +346,9 @@ button.tile{cursor:pointer}
  <div class="max-w-sm mx-auto mt-6">
   <div class="flex items-center justify-between mb-3"><span id="ob_step" class="text-sm" style="color:var(--mu)"></span><button id="ob_skip" class="text-sm underline" style="color:var(--mu)">Saltar</button></div>
   <div class="card p-4">
-   <div id="ob1"><h2 class="text-2xl font-bold">Bem-vindo, qual é a operadora?</h2><p class="text-sm mt-1" style="color:var(--mu)">A app muda as cores e as tarefas. Pode trocar depois, no topo.</p>
+   <div id="ob0"><h2 class="text-2xl font-bold">Bem-vindo ao DeltaField</h2><p class="text-sm mt-1" style="color:var(--mu)">Tudo o que a app faz, numa imagem. Toque para ver em grande.</p>
+     <a href="funcionalidades.webp" target="_blank" rel="noopener"><img src="funcionalidades.webp" alt="Funcionalidades do DeltaField: tarefas, relatórios, painel Equipa, comunidade e privacidade" width="1080" height="1589" loading="lazy" class="rounded-lg mt-3" style="display:block;width:100%;max-width:100%;height:auto;border:1px solid var(--ln)"></a></div>
+   <div id="ob1" class="hide"><h2 class="text-2xl font-bold">Bem-vindo, qual é a operadora?</h2><p class="text-sm mt-1" style="color:var(--mu)">A app muda as cores e as tarefas. Pode trocar depois, no topo.</p>
      <button class="obop btn2 w-full mt-2" data-o="nos">NOS</button><button class="obop btn2 w-full mt-2" data-o="vodafone">Vodafone</button><button class="obop btn2 w-full mt-2" data-o="meo">MEO</button></div>
    <div id="ob2" class="hide"><h2 class="text-2xl font-bold">O seu perfil</h2><p class="text-sm mt-1" style="color:var(--mu)">Aparece no fim de cada relatório.</p>
      <label>Nome</label><input id="ob_nome" class="inp"><label>País / Zona</label><input id="ob_pais" class="inp"><label>Empresa</label><input id="ob_emp" class="inp"><label>Empreiteira</label><input id="ob_empr" class="inp"><label>Email de destino do relatório</label><input id="ob_mail" type="email" class="inp"></div>
@@ -1039,11 +1041,11 @@ drawInst();
 
 // Onboarding
 var obS=1;
-function maybeOnb(){if(store.get('mt_onb',false)||!$('login').classList.contains('hide'))return;obShow(1)}
+function maybeOnb(){if(store.get('mt_onb',false)||!$('login').classList.contains('hide'))return;obShow(0)}
 function obOps(){document.querySelectorAll('.obop').forEach(b=>{b.className='obop '+(b.dataset.o===store.get('mt_op','nos')?'btn':'btn2')+' w-full mt-2'})}
 function obShow(n){
-  obS=n;$('onb').classList.remove('hide');[1,2,3,4,5].forEach(i=>$('ob'+i).classList.toggle('hide',i!==n));
-  $('ob_step').textContent=n<5?'Passo '+n+' de 4':'';$('ob_back').classList.toggle('hide',n===1||n===5);$('ob_next').textContent=n===4?'Agora não, seguinte':n===5?'Começar':'Seguinte';
+  obS=n;$('onb').classList.remove('hide');[0,1,2,3,4,5].forEach(i=>$('ob'+i).classList.toggle('hide',i!==n));
+  $('ob_step').textContent=n>=1&&n<5?'Passo '+n+' de 4':'';$('ob_back').classList.toggle('hide',n===0||n===5);$('ob_next').textContent=n===4?'Agora não, seguinte':n===5?'Começar':'Seguinte';
   if(n===4)drawInst();
   if(n===1)obOps();
   if(n===2){const c=store.get('mt_cfg',DEF);$('ob_nome').value=c.nome||'';$('ob_pais').value=c.pais||'';$('ob_emp').value=c.emp||'';$('ob_empr').value=c.empr||'';$('ob_mail').value=c.mail||''}
@@ -1059,7 +1061,7 @@ $('ob_next').onclick=()=>{
   if(obS===5){obEnd();return}
   obShow(obS+1);
 };
-$('c_onb').onclick=()=>{go('home');obShow(1)};
+$('c_onb').onclick=()=>{go('home');obShow(0)};
 maybeOnb();
 function contaLbl(){return store.get('mt_op','nos')==='vodafone'?'Acesso':'Conta de serviço'}
 
